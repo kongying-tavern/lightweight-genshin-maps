@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build": "esbuild index.ts --bundle --outdir=dist"
+  },
+  "dependencies": {
+    "@7c00/canvas-tilemap": "^0.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.17.5"
+  }
+}
