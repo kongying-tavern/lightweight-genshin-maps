@@ -41,7 +41,7 @@
           // Default cache bust is false, it will use the cache
           cacheBust: false
         };
-        var domtoimage2 = {
+        var domtoimage = {
           toSvg,
           toPng,
           toJpeg,
@@ -56,9 +56,9 @@
           }
         };
         if (typeof module !== "undefined")
-          module.exports = domtoimage2;
+          module.exports = domtoimage;
         else
-          global.domtoimage = domtoimage2;
+          global.domtoimage = domtoimage;
         function toSvg(node, options) {
           options = options || {};
           copyOptions(options);
@@ -111,14 +111,14 @@
         }
         function copyOptions(options) {
           if (typeof options.imagePlaceholder === "undefined") {
-            domtoimage2.impl.options.imagePlaceholder = defaultOptions.imagePlaceholder;
+            domtoimage.impl.options.imagePlaceholder = defaultOptions.imagePlaceholder;
           } else {
-            domtoimage2.impl.options.imagePlaceholder = options.imagePlaceholder;
+            domtoimage.impl.options.imagePlaceholder = options.imagePlaceholder;
           }
           if (typeof options.cacheBust === "undefined") {
-            domtoimage2.impl.options.cacheBust = defaultOptions.cacheBust;
+            domtoimage.impl.options.cacheBust = defaultOptions.cacheBust;
           } else {
-            domtoimage2.impl.options.cacheBust = options.cacheBust;
+            domtoimage.impl.options.cacheBust = options.cacheBust;
           }
         }
         function draw(domNode, options) {
@@ -371,7 +371,7 @@
           }
           function getAndEncode(url) {
             var TIMEOUT = 3e4;
-            if (domtoimage2.impl.options.cacheBust) {
+            if (domtoimage.impl.options.cacheBust) {
               url += (/\?/.test(url) ? "&" : "?") + (/* @__PURE__ */ new Date()).getTime();
             }
             return new Promise(function(resolve) {
@@ -383,8 +383,8 @@
               request.open("GET", url, true);
               request.send();
               var placeholder;
-              if (domtoimage2.impl.options.imagePlaceholder) {
-                var split = domtoimage2.impl.options.imagePlaceholder.split(/,/);
+              if (domtoimage.impl.options.imagePlaceholder) {
+                var split = domtoimage.impl.options.imagePlaceholder.split(/,/);
                 if (split && split[1]) {
                   placeholder = split[1];
                 }
@@ -3743,11 +3743,15 @@ Please add \`${key}Action\` when creating your handler.`);
         this.lastDragTime = timeStamp;
       }
     }
-    scaleTo(newScale, origin) {
-      const { offset, scale: scale2, minZoom, options } = this.map;
+    getNewScale(newScale) {
+      const { minZoom, options } = this.map;
       let zoom = Math.log2(newScale);
       zoom = Math.max(Math.min(zoom, options.maxZoom), minZoom);
-      newScale = 2 ** zoom;
+      return 2 ** zoom;
+    }
+    scaleTo(newScale, origin) {
+      const { offset, scale: scale2 } = this.map;
+      newScale = this.getNewScale(newScale);
       const ratio = (newScale - scale2) / scale2;
       this.map.scale = newScale;
       this.setOffset(0, offset[0] - (origin[0] - offset[0]) * ratio);
@@ -3768,8 +3772,8 @@ Please add \`${key}Action\` when creating your handler.`);
       this.scale = 0;
       this.minZoom = 0;
       this.size = [0, 0];
-      this.tileLayers = [];
-      this.markerLayers = [];
+      this.tileLayers = /* @__PURE__ */ new Set();
+      this.markerLayers = /* @__PURE__ */ new Set();
       this.lastDrawTime = 0;
       this.options = {
         ...options,
@@ -3782,20 +3786,29 @@ Please add \`${key}Action\` when creating your handler.`);
         this.element = options.element;
       }
       this.canvas = this.element.getContext("2d");
-      const style = getComputedStyle(this.element);
-      this.element.width = parseFloat(style.width) * devicePixelRatio;
-      this.element.height = parseFloat(style.height) * devicePixelRatio;
-      this.size = [
-        this.element.width / devicePixelRatio,
-        this.element.height / devicePixelRatio
-      ];
-      const minScale = Math.max(
-        this.size[0] / options.size[0],
-        this.size[1] / options.size[1]
-      );
-      this.minZoom = Math.log2(minScale);
-      this.scale = minScale;
       this.gesture = new Gesture3(this);
+      const resizeObserver = new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        setTimeout(() => this.resize(width, height), 0);
+      });
+      resizeObserver.observe(this.element);
+    }
+    resize(width, height) {
+      this.element.width = width * devicePixelRatio;
+      this.element.height = height * devicePixelRatio;
+      this.size = [width, height];
+      const minScale = Math.max(
+        this.size[0] / this.options.size[0],
+        this.size[1] / this.options.size[1]
+      );
+      const minZoom = Math.log2(minScale);
+      if (!this.scale) {
+        this.minZoom = minZoom;
+        this.scale = this.gesture.getNewScale(minScale);
+      } else if (this.minZoom != minZoom) {
+        this.minZoom = minZoom;
+        this.gesture.scaleTo(this.scale, [this.size[0] / 2, this.size[1] / 2]);
+      }
       this.draw();
     }
     draw() {
@@ -3818,6 +3831,11 @@ Please add \`${key}Action\` when creating your handler.`);
     }
   };
 
+  // node_modules/@7c00/canvas-tilemap/src/utils.ts
+  function safeCeil(n) {
+    return Math.ceil(parseFloat(n.toFixed(3)));
+  }
+
   // node_modules/@7c00/canvas-tilemap/src/tile-layer.ts
   var TileLayer = class {
     constructor(map, options) {
@@ -3832,8 +3850,8 @@ Please add \`${key}Action\` when creating your handler.`);
       const { minZoom, maxZoom, offset: tileOffset } = this.options;
       for (let z = minZoom; z <= maxZoom; z += 1) {
         const imageSize = map.options.tileSize * 2 ** (maxZoom - z);
-        const row = Math.ceil(mapSize[1] / imageSize);
-        const col = Math.ceil(mapSize[0] / imageSize);
+        const row = safeCeil(mapSize[1] / imageSize);
+        const col = safeCeil(mapSize[0] / imageSize);
         const offset = [
           Math.floor(tileOffset[0] / imageSize),
           Math.floor(tileOffset[1] / imageSize)
@@ -3863,7 +3881,7 @@ Please add \`${key}Action\` when creating your handler.`);
       const { minZoom, maxZoom, dx = 0 } = this.options;
       this.drawTiles(minZoom, dx * this.map.scale);
       let zoom = maxZoom + Math.log2(this.map.scale);
-      zoom = Math.ceil(Math.min(Math.max(zoom, minZoom), maxZoom));
+      zoom = safeCeil(Math.min(Math.max(zoom, minZoom), maxZoom));
       if (zoom > minZoom) {
         this.drawTiles(zoom);
       }
@@ -3873,9 +3891,9 @@ Please add \`${key}Action\` when creating your handler.`);
       const { scale: scale2, options, offset, size } = this.map;
       const imageSize = options.tileSize * 2 ** (this.options.maxZoom - z) * scale2;
       const startX = Math.floor(-offset[0] / imageSize);
-      const endX = Math.ceil((size[0] - offset[0] + dx) / imageSize);
+      const endX = safeCeil((size[0] - offset[0] + dx) / imageSize);
       const startY = Math.floor(-offset[1] / imageSize);
-      const endY = Math.ceil((size[1] - offset[1]) / imageSize);
+      const endY = safeCeil((size[1] - offset[1]) / imageSize);
       for (let y = startY; y < endY; y += 1) {
         for (let x = startX; x < endX; x += 1) {
           const url = baseTiles[y][x];
@@ -3910,10 +3928,18 @@ Please add \`${key}Action\` when creating your handler.`);
       const { offset, positions, image } = this.options;
       const { canvas, scale: scale2, options } = this.map;
       const size = [image.width, image.height];
+      size[0] /= devicePixelRatio;
+      size[1] /= devicePixelRatio;
       for (const i of positions) {
         const x = options.origin[0] - offset[0] + i[0];
         const y = options.origin[1] - offset[1] + i[1];
-        canvas.drawImage(image, x * scale2 - size[0] / 2, y * scale2 - size[1]);
+        canvas.drawImage(
+          image,
+          x * scale2 - size[0] / 2,
+          y * scale2 - size[1],
+          size[0],
+          size[1]
+        );
       }
     }
   };
@@ -3950,15 +3976,16 @@ Please add \`${key}Action\` when creating your handler.`);
       // size: [12288, 12288],
       // origin: [3568, 6286],
     });
-    tilemap.tileLayers.push(
+    tilemap.tileLayers.add(
       // 提瓦特大陆
       new TileLayer(tilemap, {
         minZoom: 10,
         maxZoom: 13,
         offset: [-5120, 0],
         getTileUrl(x, y, z) {
-          return `https://assets.yuanshen.site/tiles_twt34_2/${z}/${x}_${y}.png`;
-        }
+          return `https://assets.yuanshen.site/tiles_twt34/${z}/${x}_${y}.png`;
+        },
+        dx: 1024
       })
       // 渊下宫
       // new TileLayer(tilemap, {
@@ -3971,7 +3998,6 @@ Please add \`${key}Action\` when creating your handler.`);
     );
     await fetchAccessToken();
     const { record } = await api("icon/get/list", { size: 1e3 });
-    const iconSize = 32;
     const icons = {};
     for (const i of record) {
       icons[i.name] = i.url;
@@ -3982,7 +4008,7 @@ Please add \`${key}Action\` when creating your handler.`);
     await addMarker(97);
     async function addMarker(id) {
       const markers = await api("marker/get/list_byinfo", { itemIdList: [id] });
-      tilemap.markerLayers.push(
+      tilemap.markerLayers.add(
         new MarkerLayer(tilemap, {
           positions: markers.map(
             (i) => i.position.split(",").map((i2) => parseInt(i2))
@@ -3993,85 +4019,42 @@ Please add \`${key}Action\` when creating your handler.`);
       );
     }
     function createMarkerImage(url) {
-      const canvas = document.createElement("canvas");
-      const node = document.createElement("div");
-      node.style.width = "32px";
-      node.style.height = "35px";
-      node.style.position = "relative";
-      node.innerHTML = `<svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
-      xmlns:xlink="http://www.w3.org/1999/xlink">
-      <g id="Page_01_PC" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="\u5C55\u5F00/\u5305\u542B\u5207\u56FE" transform="translate(-912.000000, -444.000000)">
-          <g id="loc_02_off" transform="translate(902.000000, 434.000000)">
-            <circle id="\u692D\u5706\u5F62" fill-opacity="0.298595935" fill="#000000" cx="42" cy="42" r="32"></circle>
-            <path
-              d="M42,13 C58.0162577,13 71,25.9837423 71,42 C71,58.0162577 58.0162577,71 42,71 C25.9837423,71 13,58.0162577 13,42 C13,25.9837423 25.9837423,13 42,13 Z M42,20 C29.8497355,20 20,29.8497355 20,42 C20,54.1502645 29.8497355,64 42,64 C54.1502645,64 64,54.1502645 64,42 C64,29.8497355 54.1502645,20 42,20 Z"
-              id="\u5F62\u72B6\u7ED3\u5408" fill="#FFFFFF"></path>
-          </g>
-        </g>
-      </g>
-    </svg>`;
-      const node2 = document.createElement("div");
-      node2.innerHTML = `<svg width="32" height="32" viewBox="0 0 64 64" version="1.1"
-      style="margin: 0 auto;left: 0;right: 0;top: 0px; position: absolute" xmlns="http://www.w3.org/2000/svg"
-      xmlns:xlink="http://www.w3.org/1999/xlink">
-      <g id="Page_01_PC" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="\u5C55\u5F00/\u5305\u542B\u5207\u56FE" transform="translate(-1103.000000, -336.000000)">
-          <g id="loc_02_on" transform="translate(1093.000000, 326.000000)">
-            <g id="\u5F62\u72B6\u7ED3\u5408"
-              transform="translate(42.000000, 42.000000) rotate(-315.000000) translate(-42.000000, -42.000000) ">
-              <path
-              d="M42,13 C58.0162577,13 71,25.9837423 71,42 L64,42 L64,42 C64,29.8497355 54.1502645,20 42,20 C29.8497355,20 20,29.8497355 20,42 C20,54.1502645 29.8497355,64 42,64 L42,71 L42,71 C25.9837423,71 13,58.0162577 13,42 C13,25.9837423 25.9837423,13 42,13 Z"
-              id="path-1" fill="#E0E0E0" fill-rule="evenodd"></path>
-            </g>
-          </g>
-        </g>
-      </g>
-    </svg>
-    <svg width="12px" height="12px" viewBox="0 0 24 24" version="1.1"
-      style="margin: 0 auto;left: 0;right: 0;top: 24px; position: absolute" xmlns="http://www.w3.org/2000/svg"
-      xmlns:xlink="http://www.w3.org/1999/xlink">
-      <g id="Page_01_PC" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="\u5C55\u5F00/\u5305\u542B\u5207\u56FE" transform="translate(-1123.000000, -383.000000)">
-          <g id="nail_on" transform="translate(1123.000000, 383.000000)">
-            <polygon id="\u77E9\u5F62\u5907\u4EFD" fill-opacity="0.298595935" fill="#000000"
-              transform="translate(12.020815, 12.020815) rotate(-225.000000) translate(-12.020815, -12.020815) "
-              points="3.52081528 3.52081528 20.5208153 3.52081528 20.5208153 20.5208153 3.52081528 20.5208153"></polygon>
-            <polygon id="\u77E9\u5F62\u5907\u4EFD-2" fill="#FFFFFF"
-              transform="translate(12.020815, 12.020815) rotate(-225.000000) translate(-12.020815, -12.020815) "
-              points="6.52081528 6.52081528 17.5208153 6.52081528 17.5208153 17.5208153 6.52081528 17.5208153"></polygon>
-            <g id="\u77E9\u5F62\u5907\u4EFD-3"
-              transform="translate(12.020815, 8.485281) rotate(-225.000000) translate(-12.020815, -8.485281) ">
-              <path
-                d="M9.02081528,5.48528137 C12.3345238,5.48528137 15.0208153,8.17157288 15.0208153,11.4852814 L15.0208153,11.4852814 L15.0208153,11.4852814 L9.02081528,11.4852814 L9.02081528,5.48528137 Z"
-                id="path-2" fill="#E0E0E0" fill-rule="evenodd"></path>
-            </g>
-          </g>
-        </g>
-      </g>
-    </svg>`;
-      const icon = new Image();
-      icon.width = 22;
-      icon.height = 22;
-      icon.style.left = "0";
-      icon.style.right = "0";
-      icon.style.margin = "0 auto";
-      icon.style.position = "absolute";
-      icon.style.top = "5px";
-      icon.src = url;
+      const iconSize = 36 * devicePixelRatio;
+      const padding = 2 * devicePixelRatio;
       const image = new Image();
+      const dom = document.createElement("div");
+      dom.style.width = `${iconSize}px`;
+      dom.style.height = `${iconSize}px`;
+      dom.style.position = "relative";
+      dom.innerHTML = `
+      <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink">
+        <g id="Page_01_PC" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+          <g id="\u5C55\u5F00/\u5305\u542B\u5207\u56FE" transform="translate(-912.000000, -444.000000)">
+            <g id="loc_02_off" transform="translate(902.000000, 434.000000)">
+              <circle id="\u692D\u5706\u5F62" fill-opacity="0.298595935" fill="#000000" cx="42" cy="42" r="32"></circle>
+              <path
+                d="M42,13 C58.0162577,13 71,25.9837423 71,42 C71,58.0162577 58.0162577,71 42,71 C25.9837423,71 13,58.0162577 13,42 C13,25.9837423 25.9837423,13 42,13 Z M42,20 C29.8497355,20 20,29.8497355 20,42 C20,54.1502645 29.8497355,64 42,64 C54.1502645,64 64,54.1502645 64,42 C64,29.8497355 54.1502645,20 42,20 Z"
+                id="\u5F62\u72B6\u7ED3\u5408" fill="#FFFFFF"></path>
+            </g>
+          </g>
+        </g>
+      </svg>
+    `;
+      const icon = new Image();
+      icon.width = iconSize - padding * 2;
+      icon.style.position = "absolute";
+      icon.style.top = `${padding}px`;
+      icon.style.left = `${padding}px`;
+      icon.src = url;
       icon.addEventListener("load", () => {
-        const canvas2d = canvas.getContext("2d");
-        import_dom_to_image.default.toPng(node).then(function(dataUrl) {
-          image.src = dataUrl;
-          image.addEventListener("load", () => {
-            tilemap.draw();
-          });
+        import_dom_to_image.default.toPng(dom).then((url2) => {
+          image.src = url2;
+          tilemap.draw();
         });
       });
-      node?.appendChild(icon);
-      node?.appendChild(node2);
-      document.body.appendChild(node);
+      dom.appendChild(icon);
+      document.body.appendChild(dom);
       return image;
     }
   }
