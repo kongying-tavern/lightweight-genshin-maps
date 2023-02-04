@@ -95,6 +95,7 @@ async function main() {
     dom.style.width = `${iconSize}px`;
     dom.style.height = `${iconSize}px`;
     dom.style.position = "relative";
+    dom.style.visibility = "hidden";
     dom.innerHTML = `
       <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
         xmlns:xlink="http://www.w3.org/1999/xlink">
