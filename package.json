@@ -3,7 +3,7 @@
     "build": "esbuild index.ts --bundle --outdir=dist"
   },
   "dependencies": {
-    "@7c00/canvas-tilemap": "^0.1.1",
+    "@7c00/canvas-tilemap": "^0.3.0",
     "dom-to-image": ""
   },
   "devDependencies": {

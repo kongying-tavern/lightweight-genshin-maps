@@ -27,9 +27,10 @@ async function fetchAccessToken() {
 
 async function main() {
   const tilemap = new Tilemap({
-    element: "#canvas",
+    element: "#tilemap",
     size: [17408, 16384],
     origin: [3568, 6286],
+    tileOffset: [-5120, 0],
     maxZoom: 0.5,
 
     // 渊下宫
@@ -42,11 +43,9 @@ async function main() {
     new TileLayer(tilemap, {
       minZoom: 10,
       maxZoom: 13,
-      offset: [-5120, 0],
       getTileUrl(x, y, z) {
         return `https://assets.yuanshen.site/tiles_twt34/${z}/${x}_${y}.png`;
       },
-      dx: 1024,
     })
 
     // 渊下宫
@@ -83,7 +82,6 @@ async function main() {
           i.position.split(",").map((i: string) => parseInt(i))
         ),
         image: createMarkerImage(icons[markers[0].itemList[0].iconTag]),
-        offset: [-5120, 0],
       })
     );
   }
