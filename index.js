@@ -3641,8 +3641,7 @@ Please add \`${key}Action\` when creating your handler.`);
       this.lastDragTime = 0;
       this.scaleAnimation = inertia({});
       this.offsetAnimation = [inertia({}), inertia({})];
-      this.velocityX = new Average();
-      this.velocityY = new Average();
+      this.velocity = [new Average(), new Average()];
       this.velocityScale = new Average();
       this.map = map;
       new Gesture(this.map.element, {
@@ -3652,7 +3651,8 @@ Please add \`${key}Action\` when creating your handler.`);
         onPinchEnd: this.onPinchEnd.bind(this),
         onDragStart: this.onDragStart.bind(this),
         onDrag: this.onDrag.bind(this),
-        onDragEnd: this.onDragEnd.bind(this)
+        onDragEnd: this.onDragEnd.bind(this),
+        onClick: this.onClick.bind(this)
       });
     }
     onWheel({ direction, event, delta, timeStamp }) {
@@ -3703,47 +3703,81 @@ Please add \`${key}Action\` when creating your handler.`);
       this.offsetAnimation[0]?.stop();
       this.offsetAnimation[1]?.stop();
       this.scaleAnimation?.stop();
-      this.velocityX.clear();
-      this.velocityY.clear();
+      this.velocity[0].clear();
+      this.velocity[1].clear();
     }
     onDrag(state) {
       const { pinching, wheeling, timeStamp, velocity, delta } = state;
       if (pinching || wheeling || timeStamp - this.lastPinchTime < 200) {
         return;
       }
-      this.velocityX.add(velocity[0]);
-      this.velocityY.add(velocity[1]);
-      this.setOffset(0, this.map.offset[0] + delta[0]);
-      this.setOffset(1, this.map.offset[1] + delta[1]);
-      this.map.draw();
+      this.velocity[0].add(velocity[0]);
+      this.velocity[1].add(velocity[1]);
+      this.setOffset([
+        this.map.offset[0] + delta[0],
+        this.map.offset[1] + delta[1]
+      ]);
     }
     async onDragEnd(state) {
       const { direction, timeStamp, distance } = state;
       if (timeStamp - this.lastPinchTime < 200)
         return;
       const initialOffset = [...this.map.offset];
-      const velocity = [this.velocityX.value, this.velocityY.value];
-      const animateOffset = (index) => {
-        this.offsetAnimation[index] = inertia({
-          velocity: velocity[index],
+      const velocity = [this.velocity[0].value, this.velocity[1].value];
+      const v = Math.sqrt(velocity[0] ** 2 + velocity[1] ** 2);
+      if (v != 0) {
+        this.offsetAnimation[0] = inertia({
+          velocity: v,
           power: 200,
           timeConstant: 200,
           onUpdate: (value) => {
-            this.setOffset(
-              index,
-              initialOffset[index] + direction[index] * value
-            );
-            this.map.draw();
+            this.setOffset([
+              initialOffset[0] + direction[0] * value * (velocity[0] / v),
+              initialOffset[1] + direction[1] * value * (velocity[1] / v)
+            ]);
           }
         });
-      };
-      animateOffset(0);
-      animateOffset(1);
+      }
       if (distance[0] > 2 || distance[1] > 2) {
         this.lastDragTime = timeStamp;
       }
     }
-    getNewScale(newScale) {
+    onClick({ event }) {
+      if (event.timeStamp == this.lastDragTime)
+        return;
+      const doubleClickDelay = 200;
+      if (event.timeStamp - this.lastClickTime < doubleClickDelay) {
+        const lastScale = this.map.scale;
+        this.scaleAnimation?.stop();
+        this.scaleAnimation = inertia({
+          velocity: 1,
+          power: 1,
+          timeConstant: 100,
+          restDelta: 1e-3,
+          onUpdate: (value) => {
+            const zoom = Math.log2(lastScale) + value;
+            this.scaleTo(2 ** zoom, [event.x, event.y]);
+          }
+        });
+      } else {
+        setTimeout(() => {
+          if (event.timeStamp == this.lastClickTime) {
+            this.onClickTilemap([event.x, event.y]);
+          }
+        }, doubleClickDelay);
+      }
+      this.lastClickTime = event.timeStamp;
+    }
+    onClickTilemap(position) {
+      const result = this.map.findMarker(position);
+      if (result) {
+        result?.[0].options.onClick?.(result[1]);
+        this.map.options.onClick?.({ target: result[0], index: result[1] });
+        return;
+      }
+      this.map.options.onClick?.();
+    }
+    limitScale(newScale) {
       const { minZoom, options } = this.map;
       let zoom = Math.log2(newScale);
       zoom = Math.max(Math.min(zoom, options.maxZoom), minZoom);
@@ -3751,21 +3785,29 @@ Please add \`${key}Action\` when creating your handler.`);
     }
     scaleTo(newScale, origin) {
       const { offset, scale: scale2 } = this.map;
-      newScale = this.getNewScale(newScale);
+      newScale = this.limitScale(newScale);
       const ratio = (newScale - scale2) / scale2;
       this.map.scale = newScale;
-      this.setOffset(0, offset[0] - (origin[0] - offset[0]) * ratio);
-      this.setOffset(1, offset[1] - (origin[1] - offset[1]) * ratio);
-      this.map.draw();
+      this.setOffset([
+        offset[0] - (origin[0] - offset[0]) * ratio,
+        offset[1] - (origin[1] - offset[1]) * ratio
+      ]);
     }
-    setOffset(index, value) {
+    setOffset(value) {
       const { size, options, offset, scale: scale2 } = this.map;
-      const maxValue = size[index] - options.size[index] * scale2;
-      offset[index] = Math.min(Math.max(value, maxValue), 0);
+      const max = [
+        size[0] - options.size[0] * scale2,
+        size[1] - options.size[1] * scale2
+      ];
+      offset[0] = Math.min(Math.max(value[0], max[0]), 0);
+      offset[1] = Math.min(Math.max(value[1], max[1]), 0);
+      this.map.draw();
     }
   };
 
   // node_modules/@7c00/canvas-tilemap/src/tilemap.ts
+  var Layer = class {
+  };
   var Tilemap = class {
     constructor(options) {
       this.offset = [0, 0];
@@ -3774,10 +3816,12 @@ Please add \`${key}Action\` when creating your handler.`);
       this.size = [0, 0];
       this.tileLayers = /* @__PURE__ */ new Set();
       this.markerLayers = /* @__PURE__ */ new Set();
+      this.domLayers = /* @__PURE__ */ new Set();
+      this.imageLayers = /* @__PURE__ */ new Set();
       this.lastDrawTime = 0;
       this.options = {
         ...options,
-        tileSize: options.tileSize ?? 256,
+        tileOffset: options.tileOffset ?? [0, 0],
         maxZoom: options.maxZoom ?? 0
       };
       if (typeof options.element == "string") {
@@ -3785,17 +3829,80 @@ Please add \`${key}Action\` when creating your handler.`);
       } else {
         this.element = options.element;
       }
-      this.canvas = this.element.getContext("2d");
+      this.element.style.touchAction = "none";
+      this.canvas = document.createElement("canvas");
+      this.element.appendChild(this.canvas);
+      this.canvas2d = this.canvas.getContext("2d");
       this.gesture = new Gesture3(this);
       const resizeObserver = new ResizeObserver(([entry]) => {
         const { width, height } = entry.contentRect;
         setTimeout(() => this.resize(width, height), 0);
       });
       resizeObserver.observe(this.element);
+      this.element.addEventListener("mousemove", ({ clientX, clientY }) => {
+        const result = this.findMarker([clientX, clientY]);
+        if (result) {
+          result?.[0].options.onMouseMove?.(result[1]);
+          this.options.onMouseMove?.({ target: result[0], index: result[1] });
+          return;
+        }
+        this.options.onMouseMove?.();
+      });
+      this.domLayers.clear = new Proxy(this.domLayers.clear, {
+        apply: (target, thisArg) => {
+          for (const i of thisArg.values()) {
+            this.element.removeChild(i.element);
+          }
+          return target.apply(thisArg);
+        }
+      });
+      this.domLayers.delete = new Proxy(this.domLayers.delete, {
+        apply: (target, thisArg, argArray) => {
+          this.element.removeChild(argArray[0].element);
+          return target.apply(thisArg, argArray);
+        }
+      });
+    }
+    findMarker(point) {
+      const markerLayers = Array.from(this.markerLayers).reverse();
+      for (const marker of markerLayers) {
+        const { image, positions, anchor } = marker.options;
+        const size = [image.width, image.height];
+        size[0] /= devicePixelRatio;
+        size[1] /= devicePixelRatio;
+        for (let index = positions.length - 1; index >= 0; index -= 1) {
+          let [x, y] = this.toCanvasPositionWithOffset(positions[index]);
+          const centerOffset = [size[0] * anchor[0], size[1] * anchor[1]];
+          if (point[0] > x - centerOffset[0] && point[0] < x + (size[0] - centerOffset[0]) && point[1] > y - centerOffset[1] && point[1] < y + (size[0] - centerOffset[0])) {
+            return [marker, index];
+          }
+        }
+      }
+    }
+    toCanvasPositionWithOffset(position) {
+      const { offset } = this;
+      let [x, y] = this.toCanvasPosition(position);
+      return [x + offset[0], y + offset[1]];
+    }
+    toCanvasPosition([x, y]) {
+      const [px2, py] = this.mapPointOffset;
+      return [(x + px2) * this.scale, (y + py) * this.scale];
+    }
+    overlaps(position, size) {
+      if (position[0] + size[0] > -this.offset[0] && position[0] < this.size[0] - this.offset[0] && position[1] + size[1] > -this.offset[1] && position[1] < this.size[1] - this.offset[1]) {
+        return true;
+      }
+      return false;
+    }
+    get mapPointOffset() {
+      const { origin, tileOffset } = this.options;
+      return [origin[0] - tileOffset[0], origin[1] - tileOffset[1]];
     }
     resize(width, height) {
-      this.element.width = width * devicePixelRatio;
-      this.element.height = height * devicePixelRatio;
+      this.canvas.width = width * devicePixelRatio;
+      this.canvas.height = height * devicePixelRatio;
+      this.canvas.style.width = `${width}px`;
+      this.canvas.style.height = `${height}px`;
       this.size = [width, height];
       const minScale = Math.max(
         this.size[0] / this.options.size[0],
@@ -3804,26 +3911,32 @@ Please add \`${key}Action\` when creating your handler.`);
       const minZoom = Math.log2(minScale);
       if (!this.scale) {
         this.minZoom = minZoom;
-        this.scale = this.gesture.getNewScale(minScale);
+        this.scale = this.gesture.limitScale(minScale);
+        this.draw();
       } else if (this.minZoom != minZoom) {
         this.minZoom = minZoom;
         this.gesture.scaleTo(this.scale, [this.size[0] / 2, this.size[1] / 2]);
       }
-      this.draw();
     }
     draw() {
       const now = Date.now();
       if (now != this.lastDrawTime) {
         requestAnimationFrame(() => {
-          const { canvas, element, offset } = this;
-          canvas.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-          canvas.clearRect(0, 0, element.width, element.height);
-          canvas.translate(offset[0], offset[1]);
-          for (const tileLayer of this.tileLayers) {
-            tileLayer.draw();
+          const { canvas2d, canvas, offset } = this;
+          canvas2d.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+          canvas2d.clearRect(0, 0, canvas.width, canvas.height);
+          canvas2d.translate(offset[0], offset[1]);
+          for (const layer of this.tileLayers) {
+            layer.draw();
           }
-          for (const markerLayer of this.markerLayers) {
-            markerLayer.draw();
+          for (const layer of this.imageLayers) {
+            layer.draw();
+          }
+          for (const layer of this.markerLayers) {
+            layer.draw();
+          }
+          for (const layer of this.domLayers) {
+            layer.draw();
           }
         });
         this.lastDrawTime = now;
@@ -3837,19 +3950,20 @@ Please add \`${key}Action\` when creating your handler.`);
   }
 
   // node_modules/@7c00/canvas-tilemap/src/tile-layer.ts
-  var TileLayer = class {
+  var TileLayer = class extends Layer {
     constructor(map, options) {
+      super();
       this.tiles = {};
       this.images = {};
       this.map = map;
       this.options = {
         ...options,
-        offset: options.offset ?? [0, 0]
+        tileSize: options.tileSize ?? 256
       };
-      const { size: mapSize } = map.options;
-      const { minZoom, maxZoom, offset: tileOffset } = this.options;
+      const { size: mapSize, tileOffset } = map.options;
+      const { minZoom, maxZoom, tileSize } = this.options;
       for (let z = minZoom; z <= maxZoom; z += 1) {
-        const imageSize = map.options.tileSize * 2 ** (maxZoom - z);
+        const imageSize = tileSize * 2 ** (maxZoom - z);
         const row = safeCeil(mapSize[1] / imageSize);
         const col = safeCeil(mapSize[0] / imageSize);
         const offset = [
@@ -3878,28 +3992,30 @@ Please add \`${key}Action\` when creating your handler.`);
       }
     }
     draw() {
-      const { minZoom, maxZoom, dx = 0 } = this.options;
-      this.drawTiles(minZoom, dx * this.map.scale);
+      const { minZoom, maxZoom } = this.options;
+      this.drawTiles(minZoom);
       let zoom = maxZoom + Math.log2(this.map.scale);
       zoom = safeCeil(Math.min(Math.max(zoom, minZoom), maxZoom));
       if (zoom > minZoom) {
         this.drawTiles(zoom);
       }
     }
-    drawTiles(z, dx = 0) {
-      const baseTiles = this.tiles[z];
-      const { scale: scale2, options, offset, size } = this.map;
-      const imageSize = options.tileSize * 2 ** (this.options.maxZoom - z) * scale2;
+    drawTiles(z) {
+      const tiles = this.tiles[z];
+      const { scale: scale2, offset, size, options } = this.map;
+      const tileSize = this.options.tileSize * 2 ** (this.options.maxZoom - z);
+      const imageSize = tileSize * scale2;
+      const dx = options.size[0] % tileSize * scale2;
       const startX = Math.floor(-offset[0] / imageSize);
       const endX = safeCeil((size[0] - offset[0] + dx) / imageSize);
       const startY = Math.floor(-offset[1] / imageSize);
       const endY = safeCeil((size[1] - offset[1]) / imageSize);
       for (let y = startY; y < endY; y += 1) {
         for (let x = startX; x < endX; x += 1) {
-          const url = baseTiles[y][x];
-          const image = this.images[baseTiles[y][x]];
+          const url = tiles[y][x];
+          const image = this.images[tiles[y][x]];
           if (image) {
-            this.map.canvas.drawImage(
+            this.map.canvas2d.drawImage(
               image,
               imageSize * x - dx,
               imageSize * y,
@@ -3919,27 +4035,28 @@ Please add \`${key}Action\` when creating your handler.`);
   };
 
   // node_modules/@7c00/canvas-tilemap/src/marker-layer.ts
-  var MarkerLayer = class {
+  var MarkerLayer = class extends Layer {
     constructor(map, options) {
+      super();
       this.map = map;
-      this.options = { ...options, offset: options.offset ?? [0, 0] };
+      this.options = { ...options, anchor: options.anchor ?? [0.5, 1] };
     }
     draw() {
-      const { offset, positions, image } = this.options;
-      const { canvas, scale: scale2, options } = this.map;
-      const size = [image.width, image.height];
+      const { positions, image, anchor } = this.options;
+      const { canvas2d } = this.map;
+      const size = [
+        image.width,
+        image.height
+      ];
       size[0] /= devicePixelRatio;
       size[1] /= devicePixelRatio;
       for (const i of positions) {
-        const x = options.origin[0] - offset[0] + i[0];
-        const y = options.origin[1] - offset[1] + i[1];
-        canvas.drawImage(
-          image,
-          x * scale2 - size[0] / 2,
-          y * scale2 - size[1],
-          size[0],
-          size[1]
-        );
+        let [x, y] = this.map.toCanvasPosition(i);
+        x -= size[0] * anchor[0];
+        y -= size[1] * anchor[1];
+        if (this.map.overlaps([x, y], size)) {
+          canvas2d.drawImage(image, x, y, size[0], size[1]);
+        }
       }
     }
   };
@@ -3968,9 +4085,10 @@ Please add \`${key}Action\` when creating your handler.`);
   }
   async function main() {
     const tilemap = new Tilemap({
-      element: "#canvas",
+      element: "#tilemap",
       size: [17408, 16384],
       origin: [3568, 6286],
+      tileOffset: [-5120, 0],
       maxZoom: 0.5
       // 渊下宫
       // size: [12288, 12288],
@@ -3981,11 +4099,9 @@ Please add \`${key}Action\` when creating your handler.`);
       new TileLayer(tilemap, {
         minZoom: 10,
         maxZoom: 13,
-        offset: [-5120, 0],
         getTileUrl(x, y, z) {
           return `https://assets.yuanshen.site/tiles_twt34/${z}/${x}_${y}.png`;
-        },
-        dx: 1024
+        }
       })
       // 渊下宫
       // new TileLayer(tilemap, {
@@ -4013,8 +4129,7 @@ Please add \`${key}Action\` when creating your handler.`);
           positions: markers.map(
             (i) => i.position.split(",").map((i2) => parseInt(i2))
           ),
-          image: createMarkerImage(icons[markers[0].itemList[0].iconTag]),
-          offset: [-5120, 0]
+          image: createMarkerImage(icons[markers[0].itemList[0].iconTag])
         })
       );
     }
