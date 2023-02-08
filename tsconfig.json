@@ -3,6 +3,9 @@
     "outDir": "dist",
     "strict": true,
     "target": "esnext",
+    "jsx": "react",
+    "reactNamespace": "window",
+    "esModuleInterop": true,
     "moduleResolution": "node"
   }
 }
