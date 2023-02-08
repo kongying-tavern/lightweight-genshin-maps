@@ -127,12 +127,11 @@ function Items(props: { items: AreaItem[]; isSelected: boolean }) {
             }}
           >
             <div className="flex">
-              {props.isSelected && (
-                <img
-                  className="w-9 h-9 bg-black/10 box-border p-1 mr-1"
-                  src={store.iconMap[i.iconTag]}
-                />
-              )}
+              <div className="w-9 h-9 bg-black/10 p-1 box-border mr-1">
+                {props.isSelected && (
+                  <img className="w-7 h-7 object-cover" src={store.iconMap[i.iconTag]} />
+                )}
+              </div>
               <div className="flex flex-1 flex-col justify-center overflow-hidden">
                 <div className="whitespace-nowrap text-ellipsis overflow-hidden">
                   {i.name}

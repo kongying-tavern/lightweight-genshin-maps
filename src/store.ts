@@ -63,10 +63,17 @@ async function initAreaList() {
 }
 
 async function initIconMap() {
+  try {
+    const json = localStorage.getItem("icons");
+    if (json) {
+      store.iconMap = JSON.parse(json);
+    }
+  } catch (_) {}
   const { record } = await api("icon/get/list", { size: 1e3 });
   for (const i of record) {
     store.iconMap[i.name] = i.url;
   }
+  localStorage.setItem("icons", JSON.stringify(store.iconMap));
 }
 
 async function initItemTypes() {
@@ -105,7 +112,16 @@ async function fetchMarkers(items: AreaItem[]) {
     itemIdList: items.map((i) => i.itemId),
   });
   for (const i of markers) {
+    for (const item of i.itemList) {
+      let items = markersMap[item.itemId];
+      if (!items) {
+        items = [];
+        markersMap[item.itemId] = items;
+      }
+      items.push(i);
+    }
   }
+  console.log(markersMap);
   console.log(markers);
 }
 

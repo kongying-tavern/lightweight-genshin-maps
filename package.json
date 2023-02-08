@@ -1,9 +1,9 @@
 {
   "scripts": {
     "esbuild": "esbuild src/index.tsx --bundle --outdir=dist --loader:.png=file",
-    "build": "npm run unocss && npm run esbuild --minify",
+    "build": "npm run unocss && npm run esbuild -- --minify",
     "unocss": "unocss index.html 'src/**/*.tsx' -o dist/index.css",
-    "dev": "(npm run unocss -w &); npm run esbuild --watch --sourcemap"
+    "dev": "(npm run unocss -- -w &); npm run esbuild -- --watch --sourcemap"
   },
   "dependencies": {
     "@7c00/canvas-tilemap": "^0.4.1",
@@ -22,3 +22,4 @@
     "react-dom": "./alias/react.js"
   }
 }
+

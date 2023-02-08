@@ -31,6 +31,7 @@ export interface MarkerInfo {
   markerExtraContent: string;
   position: string;
   picture: string;
+  itemList: AreaItem[];
 }
 
 export async function api(path: string, params: Record<string, any> = {}) {
