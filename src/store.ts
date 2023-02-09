@@ -1,4 +1,10 @@
-import { TileLayer, Tilemap } from "@7c00/canvas-tilemap/src";
+import {
+  DomLayer,
+  MarkerEvent,
+  MarkerLayer,
+  TileLayer,
+  Tilemap,
+} from "@7c00/canvas-tilemap/src";
 import { proxy } from "valtio";
 import { proxySet } from "valtio/utils";
 import {
@@ -14,6 +20,7 @@ import { teyvatMapConfig } from "./maps-config";
 
 export let tilemap: Tilemap;
 export const markerMap = {} as Record<number, AreaItemMarker>;
+let activeMarkerLayer: MarkerLayer;
 
 export const store = proxy({
   accessToken: "",
@@ -173,10 +180,52 @@ export function toggleAreaItem(areaItem: AreaItem) {
   }
 }
 
+function handleTilemapClick(event?: MarkerEvent) {
+  if (event) {
+    const { target, index } = event;
+    if (target == activeMarkerLayer) return;
+
+    const { image, items } = target.options;
+    const item = items[index];
+    tilemap.markerLayers.add(activeMarkerLayer);
+    activeMarkerLayer.options.items[0] = item;
+    activeMarkerLayer.options.image = image;
+
+    const markerElement = document.createElement("div");
+    markerElement.className = "marker";
+    markerElement.innerHTML = `
+        <div class="marker-title">${item.data.markerTitle}</div>
+        <div class="marker-content">${item.data.content}</div>
+        ${item.data.picture ? `<img src="${item.data.picture}">` : ""}
+      `;
+    tilemap.domLayers.clear();
+    tilemap.domLayers.add(
+      new DomLayer(tilemap, {
+        element: markerElement,
+        position: [item.x, item.y],
+      })
+    );
+    tilemap.draw();
+  }
+}
+
+function createActiveMarkerImage(image: HTMLCanvasElement) {
+  const canvas = document.createElement("canvas")!;
+  const canvas2d = canvas.getContext("2d")!;
+  canvas.width = image.width;
+  canvas.height = image.height;
+  canvas2d.drawImage(image, 0, 0);
+  return canvas;
+}
+
 export function initTilemap(element: HTMLElement | null) {
   if (!element) return;
 
-  tilemap = new Tilemap({ element, ...teyvatMapConfig });
+  tilemap = new Tilemap({
+    ...teyvatMapConfig,
+    element,
+    onClick: handleTilemapClick,
+  });
   tilemap.tileLayers.add(
     new TileLayer(tilemap, {
       minZoom: 10,
