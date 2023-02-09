@@ -13,6 +13,8 @@ export interface AreaItem {
   count: number;
   defaultCountent: string;
   iconTag: string;
+  iconStyleType: number;
+  specialFlag: number;
   name: string;
   typeIdList: number[];
 }
