@@ -4,7 +4,7 @@ import {
   MarkerLayer,
   TileLayer,
   Tilemap,
-} from "@7c00/canvas-tilemap/src";
+} from "@7c00/canvas-tilemap";
 import { proxy } from "valtio";
 import { proxySet } from "valtio/utils";
 import {
@@ -184,6 +184,12 @@ function handleTilemapClick(event?: MarkerEvent) {
   if (event) {
     const { target, index } = event;
     if (target == activeMarkerLayer) return;
+    if (!activeMarkerLayer) {
+      activeMarkerLayer = new MarkerLayer(tilemap, {
+        items: [],
+        image: new Image(),
+      });
+    }
 
     const { image, items } = target.options;
     const item = items[index];
@@ -205,6 +211,10 @@ function handleTilemapClick(event?: MarkerEvent) {
         position: [item.x, item.y],
       })
     );
+    tilemap.draw();
+  } else {
+    tilemap.markerLayers.delete(activeMarkerLayer);
+    tilemap.domLayers.clear();
     tilemap.draw();
   }
 }
