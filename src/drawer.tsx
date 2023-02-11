@@ -15,9 +15,9 @@ export function Drawer() {
   const { isDrawerOpen } = useSnapshot(store);
   return (
     <div
-      className="flex flex-col w-72 h-full absolute top-2 right-2 duration-300 ease-out"
+      className="flex flex-col w-72 h-full absolute top-20 right-2 duration-300 ease-out"
       style={{
-        height: "calc(100% - 1rem)",
+        height: "calc(100% - 5rem)",
         transform: `translate(${isDrawerOpen ? 0 : 17}rem, 0)`,
       }}
     >
@@ -93,7 +93,7 @@ function TypeItem(props: { itemType: ItemType }) {
     >
       <div className="flex items-center">
         <img src={icon} className="w-6 h-6 mr-2" crossOrigin="anonymous" />
-        <div className="flex-1">{name}</div>
+        <div className="flex-1 text-gray-900">{name}</div>
         <div
           className={classNames(
             "text-sm duration-300 ease-out",
@@ -123,7 +123,7 @@ function Items(props: { items: AreaItem[]; isSelected: boolean }) {
         const active = activeAreaItems.has(i.itemId);
         return (
           <div
-            className="text-xs text-gray-700 mt-1"
+            className="text-xs mt-1"
             style={{ background: active ? "#424b63" : "#f6f6f6" }}
             onClick={(event) => {
               event.stopPropagation();
@@ -149,7 +149,7 @@ function Items(props: { items: AreaItem[]; isSelected: boolean }) {
                 >
                   {i.name}
                 </div>
-                <div className="text-gray-400">{i.count}</div>
+                <div className="text-gray-500">{i.count}</div>
               </div>
             </div>
           </div>

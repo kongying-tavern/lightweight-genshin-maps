@@ -1,3 +1,4 @@
 module.exports = {
-  content: ["./src/**/*.tsx", "index.html"],
+  content: ["./src/**/*.{ts,tsx}", "index.html"],
+  corePlugins: { preflight: false },
 };

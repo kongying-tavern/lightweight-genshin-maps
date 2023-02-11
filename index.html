@@ -1,47 +1,11 @@
 <!DOCTYPE html>
-<meta name="viewport" content="width=device-width, user-scalable=no" />
-<link rel="stylesheet" href="index.css" />
-<style>
-  .overflow-y-auto::-webkit-scrollbar {
-    display: none;
-  }
-  .marker {
-    width: 200px;
-    position: relative;
-    left: -50%;
-    top: calc(-100% - 42px);
-    background: #fff;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: small;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1))
-      drop-shadow(0 1px 1px rgb(0 0 0 / 0.06));
-  }
-  .marker:after {
-    content: "";
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid #fff;
-    bottom: -6px;
-    left: 50%;
-    margin-left: -8px;
-  }
-  .marker img {
-    width: 100%;
-  }
-  .marker-content {
-    color: #666;
-    font-size: smaller;
-  }
-</style>
-<main
-  id="main"
-  class="select-none touch-none fixed w-full h-full left-0 top-0 font-sans bg-white z-10"
-/>
-<script src="index.js"></script>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body class="select-none font-sans text-gray-700 m-0">
+    <main id="main" class="fixed w-full h-full bg-gray-900 z-10" />
+    <script src="index.js"></script>
+  </body>
+</html>

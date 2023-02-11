@@ -5,7 +5,7 @@ import { AreaItem, MarkerInfo } from "./api";
 import { store, tilemap } from "./store";
 
 const iconSize = 36;
-const padding = 6;
+const padding = 5;
 
 export class AreaItemMarker {
   isTeleport = false;

@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "esbuild": "esbuild src/index.tsx --bundle --outdir=dist --loader:.png=file",
-    "build": "npm run unocss && npm run esbuild -- --minify",
-    "unocss": "unocss index.html 'src/**/*.tsx' -o dist/index.css",
-    "dev": "(npm run unocss -- -w &); npm run esbuild -- --watch --sourcemap"
+    "esbuild": "esbuild src/index.tsx --bundle --outdir=dist --alias:react=preact/compat --alias:react-dom=preact/compat --loader:.png=file",
+    "build": "npm run tailwind && npm run esbuild -- --minify",
+    "tailwind": "tailwind -i src/index.css -o dist/index.css",
+    "dev": "(npm run tailwind -- -w &); npm run esbuild -- --watch --sourcemap"
   },
   "dependencies": {
     "@7c00/canvas-tilemap": "^0.5.1",
@@ -15,11 +15,8 @@
   "devDependencies": {
     "@types/dom-to-image": "^2.6.4",
     "@types/react-dom": "^18.0.10",
-    "@unocss/cli": "^0.49.4",
-    "esbuild": "^0.17.5"
-  },
-  "browser": {
-    "react": "./alias/react.js",
-    "react-dom": "./alias/react.js"
+    "esbuild": "^0.17.5",
+    "tailwindcss": "^3.2.6"
   }
 }
+

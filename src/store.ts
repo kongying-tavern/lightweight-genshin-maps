@@ -70,6 +70,8 @@ async function initAreaList() {
 function updateAreaList(areaList: Area[]) {
   if (!areaList.length) return;
   for (const area of areaList) {
+    if (store.areaMap[area.areaId]) continue;
+
     area.children = [];
     store.areaMap[area.areaId] = area;
     if (area.parentId == -1) {
@@ -197,17 +199,21 @@ function handleTilemapClick(event?: MarkerEvent) {
     activeMarkerLayer.options.items[0] = item;
     activeMarkerLayer.options.image = image;
 
-    const markerElement = document.createElement("div");
-    markerElement.className = "marker";
-    markerElement.innerHTML = `
-        <div class="marker-title">${item.data.markerTitle}</div>
-        <div class="marker-content">${item.data.content}</div>
-        ${item.data.picture ? `<img src="${item.data.picture}">` : ""}
-      `;
+    const img = `<img class="w-full" src="${item.data.picture}">`;
+    const element = document.createElement("div");
+    element.classList.add("relative", "-left-1/2", "w-56", "bg-white", "p-3");
+    element.classList.add("rounded-md", "text-sm", "flex", "flex-col", "gap-2");
+    element.classList.add("shadow", "marker");
+    element.style.top = "calc(-100% - 42px)";
+    element.innerHTML = `
+        <div class="text-gray-900">${item.data.markerTitle}</div>
+        <div class="text-gray-500 text-xs">${item.data.content}</div>
+        ${item.data.picture ? img : ""}
+    `;
     tilemap.domLayers.clear();
     tilemap.domLayers.add(
       new DomLayer(tilemap, {
-        element: markerElement,
+        element: element,
         position: [item.x, item.y],
       })
     );
@@ -217,15 +223,6 @@ function handleTilemapClick(event?: MarkerEvent) {
     tilemap.domLayers.clear();
     tilemap.draw();
   }
-}
-
-function createActiveMarkerImage(image: HTMLCanvasElement) {
-  const canvas = document.createElement("canvas")!;
-  const canvas2d = canvas.getContext("2d")!;
-  canvas.width = image.width;
-  canvas.height = image.height;
-  canvas2d.drawImage(image, 0, 0);
-  return canvas;
 }
 
 export function initTilemap(element: HTMLElement | null) {
