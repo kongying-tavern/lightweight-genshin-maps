@@ -32,7 +32,7 @@ export const store = proxy({
   isDrawerOpen: true,
   iconMap: {} as Record<string, string>,
   areaItemMap: {} as Record<number, AreaItem>,
-  teleports: [] as AreaItem[],
+  teleportIdList: [] as number[],
   marked: proxySet<number>(),
   activeAreaItems: proxySet<number>(),
 });
@@ -84,6 +84,13 @@ function updateAreaList(areaList: Area[]) {
   store.activeSubArea = store.activeTopArea.children[0];
 }
 
+export function activateArea(areaId: number) {
+  const subArea = store.areaMap[areaId];
+  store.activeTopArea = store.areaMap[subArea.parentId];
+  store.activeSubArea = subArea;
+  initAreaItems();
+}
+
 async function initIconMap() {
   const cacheKey = "icons";
   let iconMap = {};
@@ -107,7 +114,14 @@ async function initItemTypes() {
 }
 
 async function initAreaItems() {
-  store.teleports = [];
+  // 先移除之前地区的传送点位
+  for (const id of store.teleportIdList) {
+    store.activeAreaItems.delete(id);
+    const marker = markerMap[id];
+    marker.removeMarkerLayer();
+  }
+
+  store.teleportIdList = [];
   const { record } = await api("item/get/list", {
     areaIdList: [store.activeSubArea.areaId],
     size: 1e3,
@@ -123,15 +137,15 @@ async function initAreaItems() {
       }
     }
     if (areaItem.specialFlag) {
-      store.teleports.push(areaItem);
+      store.teleportIdList.push(areaItem.itemId);
     }
   }
-  activeAreaItems(store.teleports);
+  activeAreaItems(store.teleportIdList);
 }
 
-async function activeAreaItems(areaItems: AreaItem[]) {
+async function activeAreaItems(areaItems: number[]) {
   const itemIdList = [] as number[];
-  for (const { itemId } of areaItems) {
+  for (const itemId of areaItems) {
     const marker = markerMap[itemId];
     if (marker) {
       marker.addMarkerLayer();
@@ -178,7 +192,7 @@ export function toggleAreaItem(areaItem: AreaItem) {
     markerMap[itemId].removeMarkerLayer();
   } else {
     store.activeAreaItems.add(itemId);
-    activeAreaItems([areaItem]);
+    activeAreaItems([areaItem.itemId]);
   }
 }
 

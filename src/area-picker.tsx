@@ -1,6 +1,6 @@
 import { useSnapshot } from "valtio";
 import { AreaIconName, areaIcons } from "./area-icons";
-import { store } from "./store";
+import { activateArea, store } from "./store";
 import compassIcon from "../images/icon-compass.png";
 import classNames from "classnames";
 
@@ -13,9 +13,7 @@ export function AreaPicker() {
       <div className="absolute right-4 top-0 h-20 flex items-center">
         <div
           className="flex-1 flex flex-col pt-1 mr-4 items-end justify-center"
-          onClick={() => {
-            console.log(0);
-          }}
+          onClick={() => {}}
         >
           <div className="text-white flex items-center">
             <div className="rounded-full px-3 py-1 h-7 bg-black/50 mr-2 flex items-center">
@@ -43,7 +41,12 @@ export function AreaPicker() {
         {topAreaList.map((i) => {
           const icon = areaIcons[i.name as AreaIconName];
           return (
-            <div className="mx-2 relative w-14 h-14">
+            <div
+              className="mx-2 relative w-14 h-14"
+              onClick={() => {
+                activateArea(i.children[0].areaId);
+              }}
+            >
               {activeTopArea == i ? (
                 <img
                   className="absolute w-20 h-20 -top-3 -left-3"
@@ -68,6 +71,9 @@ export function AreaPicker() {
                 "py-0.5 px-4 rounded-full bg-black/50 text-white font-semibold border-2 border-solid hover:border-white ease-out duration-300",
                 activeSubArea == i ? "border-white" : "border-transparent"
               )}
+              onClick={() => {
+                activateArea(i.areaId);
+              }}
             >
               {i.name}
             </div>
