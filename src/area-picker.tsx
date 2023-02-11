@@ -1,22 +1,28 @@
 import { useSnapshot } from "valtio";
 import { AreaIconName, areaIcons } from "./area-icons";
-import { activateArea, store } from "./store";
+import { activateArea, store, toggleAreaPicker } from "./store";
 import compassIcon from "../images/icon-compass.png";
 import classNames from "classnames";
 
 export function AreaPicker() {
-  const { activeTopArea, activeSubArea, topAreaList } = useSnapshot(store);
+  const { activeTopArea, activeSubArea, topAreaList, isAreaPickerOpen } =
+    useSnapshot(store);
   if (activeTopArea == null) return null;
 
   return (
     <>
-      <div className="absolute right-4 top-0 h-20 flex items-center">
+      <div
+        className={classNames(
+          "absolute right-4 h-20 flex items-center ease-out duration-300",
+          isAreaPickerOpen ? "opacity-0" : "opacity-100"
+        )}
+      >
         <div
           className="flex-1 flex flex-col pt-1 mr-4 items-end justify-center"
-          onClick={() => {}}
+          onClick={toggleAreaPicker}
         >
           <div className="text-white flex items-center">
-            <div className="rounded-full px-3 py-1 h-7 bg-black/50 mr-2 flex items-center">
+            <div className="rounded-full px-3 h-7 bg-black/50 mr-2 flex items-center">
               <img className="w-5 h-5 mr-1" src={compassIcon} />
               更换地区
             </div>
@@ -32,7 +38,10 @@ export function AreaPicker() {
         />
       </div>
       <div
-        className="absolute w-full top-0 h-20 flex items-center justify-center"
+        className={classNames(
+          "absolute w-full top-0 h-20 flex items-center justify-center ease-out duration-300",
+          isAreaPickerOpen ? "top-0 opacity-100" : "-top-40 opacity-0"
+        )}
         style={{
           background:
             "linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.5) 50%,rgba(0,0,0,0) 100%)",
@@ -64,7 +73,7 @@ export function AreaPicker() {
             </div>
           );
         })}
-        <div className="absolute -bottom-10 flex gap-2">
+        <div className="absolute top-20 px-8 py-3 flex flex-wrap gap-2 justify-center">
           {activeTopArea.children.map((i) => (
             <div
               className={classNames(

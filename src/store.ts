@@ -17,6 +17,7 @@ import {
 } from "./api";
 import { AreaItemMarker } from "./area-item-marker";
 import { teyvatMapConfig } from "./maps-config";
+import { createMarkerInfoElement } from "./marker-info";
 
 export let tilemap: Tilemap;
 export const markerMap = {} as Record<number, AreaItemMarker>;
@@ -30,6 +31,7 @@ export const store = proxy({
   activeSubArea: null as unknown as Area,
   itemTypeMap: {} as Record<number, ItemType>,
   isDrawerOpen: true,
+  isAreaPickerOpen: false,
   iconMap: {} as Record<string, string>,
   areaItemMap: {} as Record<number, AreaItem>,
   teleportIdList: [] as number[],
@@ -85,6 +87,8 @@ function updateAreaList(areaList: Area[]) {
 }
 
 export function activateArea(areaId: number) {
+  if (store.activeSubArea.areaId == areaId) return;
+
   const subArea = store.areaMap[areaId];
   store.activeTopArea = store.areaMap[subArea.parentId];
   store.activeSubArea = subArea;
@@ -117,8 +121,7 @@ async function initAreaItems() {
   // 先移除之前地区的传送点位
   for (const id of store.teleportIdList) {
     store.activeAreaItems.delete(id);
-    const marker = markerMap[id];
-    marker.removeMarkerLayer();
+    markerMap[id]?.removeMarkerLayer();
   }
 
   store.teleportIdList = [];
@@ -196,7 +199,7 @@ export function toggleAreaItem(areaItem: AreaItem) {
   }
 }
 
-function handleTilemapClick(event?: MarkerEvent) {
+function onTilemapClick(event?: MarkerEvent) {
   if (event) {
     const { target, index } = event;
     if (target == activeMarkerLayer) return;
@@ -212,22 +215,10 @@ function handleTilemapClick(event?: MarkerEvent) {
     tilemap.markerLayers.add(activeMarkerLayer);
     activeMarkerLayer.options.items[0] = item;
     activeMarkerLayer.options.image = image;
-
-    const img = `<img class="w-full" src="${item.data.picture}">`;
-    const element = document.createElement("div");
-    element.classList.add("relative", "-left-1/2", "w-56", "bg-white", "p-3");
-    element.classList.add("rounded-md", "text-sm", "flex", "flex-col", "gap-2");
-    element.classList.add("shadow", "marker");
-    element.style.top = "calc(-100% - 42px)";
-    element.innerHTML = `
-        <div class="text-gray-900">${item.data.markerTitle}</div>
-        <div class="text-gray-500 text-xs">${item.data.content}</div>
-        ${item.data.picture ? img : ""}
-    `;
     tilemap.domLayers.clear();
     tilemap.domLayers.add(
       new DomLayer(tilemap, {
-        element: element,
+        element: createMarkerInfoElement(item),
         position: [item.x, item.y],
       })
     );
@@ -237,6 +228,7 @@ function handleTilemapClick(event?: MarkerEvent) {
     tilemap.domLayers.clear();
     tilemap.draw();
   }
+  closeAreaPicker();
 }
 
 export function initTilemap(element: HTMLElement | null) {
@@ -245,7 +237,7 @@ export function initTilemap(element: HTMLElement | null) {
   tilemap = new Tilemap({
     ...teyvatMapConfig,
     element,
-    onClick: handleTilemapClick,
+    onClick: onTilemapClick,
   });
   tilemap.tileLayers.add(
     new TileLayer(tilemap, {
@@ -258,4 +250,12 @@ export function initTilemap(element: HTMLElement | null) {
 
 export function toggleDrawer() {
   store.isDrawerOpen = !store.isDrawerOpen;
+}
+
+export function toggleAreaPicker() {
+  store.isAreaPickerOpen = !store.isAreaPickerOpen;
+}
+
+export function closeAreaPicker() {
+  store.isAreaPickerOpen = false;
 }
