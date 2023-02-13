@@ -39,7 +39,7 @@ export function AreaPicker() {
       </div>
       <div
         className={classNames(
-          "absolute w-full top-0 h-20 flex items-center justify-center ease-out duration-300",
+          "absolute w-full h-20 flex items-center justify-center ease-out duration-300",
           isAreaPickerOpen ? "top-0 opacity-100" : "-top-40 opacity-0"
         )}
         style={{

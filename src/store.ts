@@ -124,11 +124,15 @@ async function initAreaItems() {
     markerMap[id]?.removeMarkerLayer();
   }
 
-  store.teleportIdList = [];
   const { record } = await api("item/get/list", {
     areaIdList: [store.activeSubArea.areaId],
     size: 1e3,
   });
+
+  store.teleportIdList = [];
+  for (const itemType of Object.values(store.itemTypeMap)) {
+    itemType.items = [];
+  }
   for (const areaItem of record as AreaItem[]) {
     store.areaItemMap[areaItem.itemId] = areaItem;
     for (const typeId of areaItem.typeIdList) {
