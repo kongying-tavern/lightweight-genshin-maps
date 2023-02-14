@@ -222,6 +222,10 @@
   box-sizing: border-box;
 }
 
+.block {
+  display: block;
+}
+
 .flex {
   display: flex;
 }
@@ -276,6 +280,10 @@
 
 .h-full {
   height: 100%;
+}
+
+.w-10 {
+  width: 2.5rem;
 }
 
 .w-14 {
@@ -555,10 +563,6 @@
 .text-xs {
   font-size: 0.75rem;
   line-height: 1rem;
-}
-
-.font-bold {
-  font-weight: 700;
 }
 
 .font-semibold {
