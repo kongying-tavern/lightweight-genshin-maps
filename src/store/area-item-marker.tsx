@@ -1,13 +1,13 @@
 import { MarkerItem, MarkerLayer } from "@7c00/canvas-tilemap";
 import dom2img from "dom-to-image";
 import { render } from "react-dom";
-import { store, tilemap } from ".";
+import { isNonGround, store, tilemap } from ".";
 import { AreaItem, MarkerInfo } from "../api";
 
 export class AreaItemMarker {
   isTeleport = false;
   areaItem: AreaItem;
-  markers: MarkerInfo[];
+  markerInfoList: MarkerInfo[];
   markerLayer?: MarkerLayer;
   markedMarkerLayer?: MarkerLayer;
   items: MarkerItem<MarkerInfo>[] = [];
@@ -15,9 +15,8 @@ export class AreaItemMarker {
 
   constructor(areaItem: AreaItem, markers: MarkerInfo[]) {
     this.areaItem = areaItem;
-    this.markers = markers;
+    this.markerInfoList = markers;
     this.update();
-    this.initMarkerLayer();
   }
 
   async initMarkerLayer() {
@@ -39,7 +38,10 @@ export class AreaItemMarker {
   update() {
     this.items = [];
     this.markedItems = [];
-    for (const i of this.markers) {
+    const markerInfoList = this.markerInfoList.filter((i) => {
+      return !store.showsNonGroundOnly || isNonGround(i);
+    });
+    for (const i of markerInfoList) {
       const [x, y] = i.position.split(",").map((i) => parseFloat(i));
       if (store.marked.has(i.id)) {
         this.markedItems.push({ data: i, x, y });
@@ -47,9 +49,16 @@ export class AreaItemMarker {
         this.items.push({ data: i, x, y });
       }
     }
+    if (this.markerLayer) {
+      this.markerLayer.options.items = this.items;
+    }
+    if (this.markedMarkerLayer) {
+      this.markedMarkerLayer.options.items = this.items;
+    }
+    tilemap.draw();
   }
 
-  removeMarkerLayer() {
+  hideMarkerLayer() {
     if (this.markerLayer) {
       tilemap.markerLayers.delete(this.markerLayer);
     }
@@ -59,7 +68,7 @@ export class AreaItemMarker {
     tilemap.draw();
   }
 
-  addMarkerLayer() {
+  showMarkerLayer() {
     if (this.markerLayer) {
       tilemap.markerLayers.add(this.markerLayer);
     }

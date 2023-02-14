@@ -20,14 +20,26 @@ export function Switch({
   return (
     <div
       {...props}
-      className={classNames("h-6 gap-2 flex", props.className)}
+      className={classNames("h-6 gap-2 flex items-center", props.className)}
       onClick={() => {
         setValue(!value);
         onChange(!value);
       }}
     >
-      <img className="h-full" src={value ? switchOnImage : switchOffImage} />
-      <div className="text-white font-bold" style={{ textShadow: "0 0 8px #000" }}>
+      <div className="w-10 h-5 relative">
+        <img
+          className={classNames("w-full absolute", value && "block")}
+          src={switchOnImage}
+        />
+        <img
+          className={classNames("w-full absolute", value && "hidden")}
+          src={switchOffImage}
+        />
+      </div>
+      <div
+        className="text-white font-semibold"
+        style={{ textShadow: "0 0 8px #000" }}
+      >
         {label}
       </div>
     </div>

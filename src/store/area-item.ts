@@ -5,6 +5,8 @@ import { nonGroundMarkerLayer, tilemap } from "./tilemap";
 
 export const areaItemMarkerMap = {} as Record<number, AreaItemMarker>;
 const areaItemMap = {} as Record<number, AreaItem>;
+const nonGroundMarkerInfoList = new Set<MarkerInfo>();
+const markerInfoListMap = {} as Record<number, MarkerInfo[]>;
 
 export async function initIconMap() {
   const cacheKey = "icons";
@@ -32,8 +34,12 @@ export async function initAreaItems() {
   // 先移除之前地区的传送点位
   for (const id of store.teleports) {
     store.activeAreaItems.delete(id);
-    areaItemMarkerMap[id]?.removeMarkerLayer();
+    areaItemMarkerMap[id]?.hideMarkerLayer();
+    for (const markerInfo of markerInfoListMap[id] ?? []) {
+      nonGroundMarkerInfoList.delete(markerInfo);
+    }
   }
+  tilemap.markerLayers.delete(nonGroundMarkerLayer);
 
   const { record } = await api("item/get/list", {
     areaIdList: [store.activeSubArea.areaId],
@@ -64,9 +70,15 @@ export async function initAreaItems() {
 async function activeAreaItems(areaItems: number[]) {
   const itemIdList = [] as number[];
   for (const itemId of areaItems) {
-    const marker = areaItemMarkerMap[itemId];
-    if (marker) {
-      marker.addMarkerLayer();
+    const areaItemMarker = areaItemMarkerMap[itemId];
+    if (areaItemMarker) {
+      areaItemMarker.showMarkerLayer();
+      // 更新非露天点位
+      for (const markerInfo of markerInfoListMap[itemId] ?? []) {
+        if (isNonGround(markerInfo)) {
+          nonGroundMarkerInfoList.add(markerInfo);
+        }
+      }
     } else {
       itemIdList.push(itemId);
     }
@@ -74,35 +86,50 @@ async function activeAreaItems(areaItems: number[]) {
 
   if (itemIdList.length) {
     fetchMarkerInfo(itemIdList);
+  } else {
+    updateNonGroundMarkerLayer();
   }
 }
 
 async function fetchMarkerInfo(itemIdList: number[]) {
-  const markersMap = {} as Record<number, MarkerInfo[]>;
-  const markers: MarkerInfo[] = await api("marker/get/list_byinfo", {
+  const allMarkerInfoList: MarkerInfo[] = await api("marker/get/list_byinfo", {
     itemIdList,
   });
 
-  tilemap.markerLayers.delete(nonGroundMarkerLayer);
-  for (const i of markers) {
-    if (i.markerExtraContent?.includes("underground")) {
-      const [x, y] = i.position.split(",").map((i) => parseFloat(i));
-      nonGroundMarkerLayer.options.items.push({ x, y, data: null });
+  for (const markerInfo of allMarkerInfoList) {
+    if (isNonGround(markerInfo)) {
+      nonGroundMarkerInfoList.add(markerInfo);
     }
+
     // TODO: 暂时只处理一个 item
-    const item = i.itemList.find((i) => itemIdList.includes(i.itemId))!;
-    let items = markersMap[item.itemId];
-    if (!items) {
-      items = [];
-      markersMap[item.itemId] = items;
+    const areaItem = markerInfo.itemList.find((i) =>
+      itemIdList.includes(i.itemId)
+    )!;
+    let markerInfoList = markerInfoListMap[areaItem.itemId];
+    if (!markerInfoList) {
+      markerInfoList = [];
+      markerInfoListMap[areaItem.itemId] = markerInfoList;
     }
-    items.push(i);
+    markerInfoList.push(markerInfo);
   }
 
-  for (const itemId in markersMap) {
-    const marker = new AreaItemMarker(areaItemMap[itemId], markersMap[itemId]);
+  for (const areaItemId of itemIdList) {
+    const markerInfoList = markerInfoListMap[areaItemId];
+    if (!markerInfoList) continue;
+
+    const marker = new AreaItemMarker(areaItemMap[areaItemId], markerInfoList);
     await marker.initMarkerLayer();
-    areaItemMarkerMap[itemId] = marker;
+    areaItemMarkerMap[areaItemId] = marker;
+  }
+
+  updateNonGroundMarkerLayer();
+}
+
+function updateNonGroundMarkerLayer() {
+  nonGroundMarkerLayer.options.items = [];
+  for (const markerInfo of nonGroundMarkerInfoList) {
+    const [x, y] = markerInfo.position.split(",").map((i) => parseFloat(i));
+    nonGroundMarkerLayer.options.items.push({ x, y });
   }
   tilemap.markerLayers.add(nonGroundMarkerLayer);
   tilemap.draw();
@@ -112,9 +139,19 @@ export function toggleAreaItem(areaItem: AreaItem) {
   const { itemId } = areaItem;
   if (store.activeAreaItems.has(itemId)) {
     store.activeAreaItems.delete(itemId);
-    areaItemMarkerMap[itemId].removeMarkerLayer();
+    areaItemMarkerMap[itemId].hideMarkerLayer();
   } else {
     store.activeAreaItems.add(itemId);
     activeAreaItems([areaItem.itemId]);
+  }
+}
+
+export function isNonGround(markerInfo: MarkerInfo) {
+  return markerInfo.markerExtraContent?.includes("sumeru");
+}
+
+export function updateMarkerLayer() {
+  for (const areaItemId of [...store.activeAreaItems, ...store.teleports]) {
+    areaItemMarkerMap[areaItemId]?.update();
   }
 }

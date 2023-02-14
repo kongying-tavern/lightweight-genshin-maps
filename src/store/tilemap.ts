@@ -33,7 +33,7 @@ function onTilemapClick(event?: MarkerEvent) {
   closeAreaPicker();
 }
 
-export function initTilemap(element: HTMLElement | null) {
+export async function initTilemap(element: HTMLElement | null) {
   if (!element) return;
 
   tilemap = new Tilemap({
@@ -48,13 +48,30 @@ export function initTilemap(element: HTMLElement | null) {
       getTileUrl: teyvatMapConfig.getTileUrl,
     })
   );
-  const nonGroundImage = new Image();
-  nonGroundImage.src = nonGroundIcon;
   nonGroundMarkerLayer = new MarkerLayer(tilemap, {
     items: [],
-    image: nonGroundImage,
+    image: await createImage(nonGroundIcon, 16, 16),
     anchor: [0, 1],
     clickable: false,
   });
   tilemap.markerLayers.add(nonGroundMarkerLayer);
+}
+
+async function createImage(
+  src: string,
+  width: number,
+  height: number
+): Promise<HTMLCanvasElement> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width * devicePixelRatio;
+  canvas.height = height * devicePixelRatio;
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.src = src;
+    image.addEventListener("load", () => {
+      const canvas2d = canvas.getContext("2d")!;
+      canvas2d.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas);
+    });
+  });
 }
