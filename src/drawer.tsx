@@ -6,7 +6,7 @@ import bottomBackgroundImage from "../images/drawer-bg-bottom.png";
 import contentBackgroundImage from "../images/drawer-bg-content.png";
 import topBackgroundImage from "../images/drawer-bg-top.png";
 import buttonImage from "../images/drawer-button.png";
-import { AreaItem, ItemType } from "./api";
+import { AreaItem, AreaItemType } from "./api";
 import { store, toggleAreaItem, toggleDrawer } from "./store";
 
 const state = proxy({ selected: proxySet() });
@@ -33,7 +33,7 @@ export function Drawer() {
           className="rounded w-60 mx-auto h-2.5 shadow relative top-1"
           style={{ backgroundColor: "#b6a9a3" }}
         />
-        <ItemTypes />
+        <AreaItemTypes />
       </div>
     </div>
   );
@@ -58,7 +58,7 @@ function ToggleButton() {
   );
 }
 
-function ItemTypes() {
+function AreaItemTypes() {
   const { itemTypeMap } = useSnapshot(store);
   return (
     <div
@@ -68,13 +68,13 @@ function ItemTypes() {
       {Object.values(itemTypeMap)
         .filter((i) => i.items.length > 0)
         .map((i) => (
-          <TypeItem itemType={i as ItemType} />
+          <TypeItem itemType={i as AreaItemType} />
         ))}
     </div>
   );
 }
 
-function TypeItem(props: { itemType: ItemType }) {
+function TypeItem(props: { itemType: AreaItemType }) {
   const { iconMap } = useSnapshot(store);
   const { selected } = useSnapshot(state);
   let { name, iconTag, typeId, items } = props.itemType;
@@ -111,13 +111,13 @@ function TypeItem(props: { itemType: ItemType }) {
         style={{ height: `${isSelected ? height : 0}rem` }}
       >
         <div className="h-2" />
-        <Items items={items} isSelected={isSelected} />
+        <AreaItems items={items} isSelected={isSelected} />
       </div>
     </div>
   );
 }
 
-function Items(props: { items: AreaItem[]; isSelected: boolean }) {
+function AreaItems(props: { items: AreaItem[]; isSelected: boolean }) {
   const { activeAreaItems } = useSnapshot(store);
   return (
     <div className="grid grid-cols-2 gap-x-1">

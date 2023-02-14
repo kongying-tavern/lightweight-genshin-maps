@@ -9,9 +9,9 @@ export function createMarkerInfoElement(item: MarkerItem<MarkerInfo>) {
   element.classList.add("shadow", "marker");
   element.style.top = "calc(-100% - 42px)";
   element.innerHTML = `
-        <div class="text-gray-900">${item.data?.markerTitle}</div>
-        <div class="text-gray-500 text-xs">${item.data?.content}</div>
-        ${item.data?.picture ? img : ""}
-    `;
+    <div class="text-gray-900">${item.data?.markerTitle}</div>
+    <div class="text-gray-500 text-xs">${item.data?.content}</div>
+    ${item.data?.picture ? img : ""}
+  `;
   return element;
 }

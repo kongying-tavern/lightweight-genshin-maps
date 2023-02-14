@@ -20,7 +20,7 @@ export interface AreaItem {
   typeIdList: number[];
 }
 
-export interface ItemType {
+export interface AreaItemType {
   typeId: number;
   iconTag: string;
   name: string;

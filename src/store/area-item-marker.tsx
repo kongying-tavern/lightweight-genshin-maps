@@ -1,11 +1,8 @@
 import { MarkerItem, MarkerLayer } from "@7c00/canvas-tilemap";
 import dom2img from "dom-to-image";
 import { render } from "react-dom";
-import { AreaItem, MarkerInfo } from "./api";
-import { store, tilemap } from "./store";
-
-const iconSize = 36;
-const padding = 5;
+import { store, tilemap } from ".";
+import { AreaItem, MarkerInfo } from "../api";
 
 export class AreaItemMarker {
   isTeleport = false;
@@ -73,6 +70,8 @@ export class AreaItemMarker {
   }
 
   createMarkerLayer(items: MarkerItem<MarkerInfo>[], marked = false) {
+    const iconSize = 36;
+    const padding = 5;
     const { specialFlag } = this.areaItem;
     return new Promise<MarkerLayer>((resolve) => {
       const icon = store.iconMap[this.areaItem.iconTag];

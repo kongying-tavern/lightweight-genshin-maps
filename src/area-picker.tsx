@@ -13,8 +13,8 @@ export function AreaPicker() {
     <>
       <div
         className={classNames(
-          "absolute right-4 h-20 flex items-center ease-out duration-300",
-          isAreaPickerOpen ? "opacity-0 -right-20" : "opacity-100 right-4"
+          "absolute h-20 flex items-center ease-out duration-300",
+          isAreaPickerOpen ? "opacity-0 -right-40" : "opacity-100 right-4"
         )}
       >
         <div
