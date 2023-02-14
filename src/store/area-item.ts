@@ -32,12 +32,10 @@ export async function initAreaItemTypes() {
 
 export async function initAreaItems() {
   // 先移除之前地区的传送点位
-  for (const id of store.teleports) {
-    store.activeAreaItems.delete(id);
-    areaItemMarkerMap[id]?.hideMarkerLayer();
-    for (const markerInfo of markerInfoListMap[id] ?? []) {
-      nonGroundMarkerInfoList.delete(markerInfo);
-    }
+  for (const areaItemId of store.teleports) {
+    store.activeAreaItems.delete(areaItemId);
+    areaItemMarkerMap[areaItemId]?.hideMarkerLayer();
+    removeNonGroundMarkers(areaItemId);
   }
   tilemap.markerLayers.delete(nonGroundMarkerLayer);
 
@@ -136,16 +134,23 @@ function updateNonGroundMarkerLayer() {
   tilemap.draw();
 }
 
+/**
+ * 移除非露天点位
+ */
+function removeNonGroundMarkers(areaItemId: number) {
+  for (const markerInfo of markerInfoListMap[areaItemId] ?? []) {
+    if (isNonGround(markerInfo)) {
+      nonGroundMarkerInfoList.delete(markerInfo);
+    }
+  }
+}
+
 export function toggleAreaItem(areaItem: AreaItem) {
   const { itemId } = areaItem;
   if (store.activeAreaItems.has(itemId)) {
     store.activeAreaItems.delete(itemId);
     areaItemMarkerMap[itemId].hideMarkerLayer();
-    for (const markerInfo of markerInfoListMap[itemId] ?? []) {
-      if (isNonGround(markerInfo)) {
-        nonGroundMarkerInfoList.delete(markerInfo);
-      }
-    }
+    removeNonGroundMarkers(itemId);
     updateNonGroundMarkerLayer();
   } else {
     store.activeAreaItems.add(itemId);
