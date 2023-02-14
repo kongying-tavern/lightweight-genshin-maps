@@ -116,16 +116,20 @@
   left: -0.75rem;
 }
 
+.-right-40 {
+  right: -10rem;
+}
+
 .-top-1 {
   top: -0.25rem;
 }
 
-.-top-3 {
-  top: -0.75rem;
+.-top-20 {
+  top: -5rem;
 }
 
-.-top-40 {
-  top: -10rem;
+.-top-3 {
+  top: -0.75rem;
 }
 
 .left-0 {
@@ -216,6 +220,10 @@
 
 .grid {
   display: grid;
+}
+
+.hidden {
+  display: none;
 }
 
 .h-14 {
