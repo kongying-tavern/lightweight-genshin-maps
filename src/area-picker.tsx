@@ -14,7 +14,7 @@ export function AreaPicker() {
       <div
         className={classNames(
           "absolute right-4 h-20 flex items-center ease-out duration-300",
-          isAreaPickerOpen ? "opacity-0" : "opacity-100"
+          isAreaPickerOpen ? "opacity-0 -right-20" : "opacity-100 right-4"
         )}
       >
         <div
@@ -40,7 +40,7 @@ export function AreaPicker() {
       <div
         className={classNames(
           "absolute w-full h-20 flex items-center justify-center ease-out duration-300",
-          isAreaPickerOpen ? "top-0 opacity-100" : "-top-40 opacity-0"
+          isAreaPickerOpen ? "top-0 opacity-100" : "-top-20 opacity-0"
         )}
         style={{
           background:
@@ -73,7 +73,12 @@ export function AreaPicker() {
             </div>
           );
         })}
-        <div className="absolute top-20 px-8 py-3 flex flex-wrap gap-2 justify-center">
+        <div
+          className={classNames(
+            "absolute top-20 px-8 py-3 flex flex-wrap gap-2 justify-center",
+            !isAreaPickerOpen && "hidden"
+          )}
+        >
           {activeTopArea.children.map((i) => (
             <div
               className={classNames(

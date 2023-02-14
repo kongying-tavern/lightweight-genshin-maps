@@ -65,9 +65,11 @@ function ItemTypes() {
       className="rounded w-full h-full shadow relative overflow-y-auto"
       style={{ backgroundColor: "#f2f0eb" }}
     >
-      {Object.values(itemTypeMap).map((i) => (
-        <TypeItem itemType={i as ItemType} />
-      ))}
+      {Object.values(itemTypeMap)
+        .filter((i) => i.items.length > 0)
+        .map((i) => (
+          <TypeItem itemType={i as ItemType} />
+        ))}
     </div>
   );
 }
@@ -78,7 +80,7 @@ function TypeItem(props: { itemType: ItemType }) {
   let { name, iconTag, typeId, items } = props.itemType;
   const isSelected = selected.has(typeId);
   const icon = iconMap[iconTag || `icon_${name}`];
-  items = items.filter((i) => !i.specialFlag);
+  items = items.filter((i) => !i.specialFlag && i.count > 0);
   const height = 2.5 * Math.ceil(items.length / 2) + 0.5;
   return (
     <div

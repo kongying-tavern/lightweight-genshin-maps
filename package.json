@@ -3,10 +3,10 @@
     "esbuild": "esbuild src/index.tsx --bundle --outdir=dist --alias:react=preact/compat --alias:react-dom=preact/compat --loader:.png=file",
     "build": "npm run tailwind && npm run esbuild -- --minify",
     "tailwind": "tailwind -i src/index.css -o dist/index.css",
-    "dev": "(npm run tailwind -- -w &); npm run esbuild -- --watch --sourcemap"
+    "dev": "run-p 'tailwind -- -w' 'esbuild -- --watch --sourcemap'"
   },
   "dependencies": {
-    "@7c00/canvas-tilemap": "^0.5.1",
+    "@7c00/canvas-tilemap": "0.5.3",
     "classnames": "^2.3.2",
     "dom-to-image": "^2.6.0",
     "preact": "^10.12.0",
@@ -16,7 +16,7 @@
     "@types/dom-to-image": "^2.6.4",
     "@types/react-dom": "^18.0.10",
     "esbuild": "^0.17.5",
+    "npm-run-all": "^4.1.5",
     "tailwindcss": "^3.2.6"
   }
 }
-

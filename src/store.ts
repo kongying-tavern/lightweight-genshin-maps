@@ -18,10 +18,11 @@ import {
 import { AreaItemMarker } from "./area-item-marker";
 import { teyvatMapConfig } from "./maps-config";
 import { createMarkerInfoElement } from "./marker-info";
+import nonGroundIcon from "../images/icon-non-ground.png";
 
 export let tilemap: Tilemap;
 export const markerMap = {} as Record<number, AreaItemMarker>;
-let activeMarkerLayer: MarkerLayer;
+let nonGroundMarkerLayer: MarkerLayer;
 
 export const store = proxy({
   accessToken: "",
@@ -30,13 +31,14 @@ export const store = proxy({
   activeTopArea: null as unknown as Area,
   activeSubArea: null as unknown as Area,
   itemTypeMap: {} as Record<number, ItemType>,
-  isDrawerOpen: true,
+  isDrawerOpen: false,
   isAreaPickerOpen: false,
   iconMap: {} as Record<string, string>,
   areaItemMap: {} as Record<number, AreaItem>,
   teleportIdList: [] as number[],
   marked: proxySet<number>(),
   activeAreaItems: proxySet<number>(),
+  nonGroundMarkers: proxySet<number>(),
 });
 
 export async function init() {
@@ -46,10 +48,13 @@ export async function init() {
   initAreaList();
 }
 
+// 初始化地区列表
 async function initAreaList() {
   const cacheKey = "areaList";
   let areaItemsInitialized = false;
   let areaList = [] as Area[];
+
+  // 从缓存加载
   try {
     areaList = JSON.parse(localStorage.getItem(cacheKey)!);
   } catch (_) {}
@@ -58,6 +63,7 @@ async function initAreaList() {
     initAreaItems();
     areaItemsInitialized = true;
   }
+
   areaList = await api("area/get/list", {
     isTraverse: true,
     parentId: -1,
@@ -71,6 +77,15 @@ async function initAreaList() {
 
 function updateAreaList(areaList: Area[]) {
   if (!areaList.length) return;
+
+  areaList.sort((a, b) => {
+    // 为了 parentId = -1 排在前面，不然循环的时候 areaMap[area.parentId] 访问出错
+    if (a.parentId - b.parentId > 0) {
+      return 1;
+    }
+    return b.sortIndex - a.sortIndex;
+  });
+
   for (const area of areaList) {
     if (store.areaMap[area.areaId]) continue;
 
@@ -82,7 +97,7 @@ function updateAreaList(areaList: Area[]) {
       store.areaMap[area.parentId].children.push(store.areaMap[area.areaId]);
     }
   }
-  store.activeTopArea = store.topAreaList[0];
+  store.activeTopArea = store.topAreaList[3];
   store.activeSubArea = store.activeTopArea.children[0];
 }
 
@@ -162,17 +177,22 @@ async function activeAreaItems(areaItems: number[]) {
   }
 
   if (itemIdList.length) {
-    fetchAreaItems(itemIdList);
+    fetchMarkerInfo(itemIdList);
   }
 }
 
-async function fetchAreaItems(itemIdList: number[]) {
+async function fetchMarkerInfo(itemIdList: number[]) {
   const markersMap = {} as Record<number, MarkerInfo[]>;
   const markers: MarkerInfo[] = await api("marker/get/list_byinfo", {
     itemIdList,
   });
 
+  tilemap.markerLayers.delete(nonGroundMarkerLayer);
   for (const i of markers) {
+    if (i.markerExtraContent?.includes("underground")) {
+      const [x, y] = i.position.split(",").map((i) => parseFloat(i));
+      nonGroundMarkerLayer.options.items.push({ x, y, data: null });
+    }
     // TODO: 暂时只处理一个 item
     const item = i.itemList.find((i) => itemIdList.includes(i.itemId))!;
     let items = markersMap[item.itemId];
@@ -188,8 +208,11 @@ async function fetchAreaItems(itemIdList: number[]) {
       store.areaItemMap[itemId],
       markersMap[itemId]
     );
+    await marker.initMarkerLayer();
     markerMap[itemId] = marker;
   }
+  tilemap.markerLayers.add(nonGroundMarkerLayer);
+  tilemap.draw();
 }
 
 export function toggleAreaItem(areaItem: AreaItem) {
@@ -206,19 +229,8 @@ export function toggleAreaItem(areaItem: AreaItem) {
 function onTilemapClick(event?: MarkerEvent) {
   if (event) {
     const { target, index } = event;
-    if (target == activeMarkerLayer) return;
-    if (!activeMarkerLayer) {
-      activeMarkerLayer = new MarkerLayer(tilemap, {
-        items: [],
-        image: new Image(),
-      });
-    }
-
-    const { image, items } = target.options;
+    const { items } = target.options;
     const item = items[index];
-    tilemap.markerLayers.add(activeMarkerLayer);
-    activeMarkerLayer.options.items[0] = item;
-    activeMarkerLayer.options.image = image;
     tilemap.domLayers.clear();
     tilemap.domLayers.add(
       new DomLayer(tilemap, {
@@ -228,7 +240,6 @@ function onTilemapClick(event?: MarkerEvent) {
     );
     tilemap.draw();
   } else {
-    tilemap.markerLayers.delete(activeMarkerLayer);
     tilemap.domLayers.clear();
     tilemap.draw();
   }
@@ -250,6 +261,15 @@ export function initTilemap(element: HTMLElement | null) {
       getTileUrl: teyvatMapConfig.getTileUrl,
     })
   );
+  const nonGroundImage = new Image();
+  nonGroundImage.src = nonGroundIcon;
+  nonGroundMarkerLayer = new MarkerLayer(tilemap, {
+    items: [],
+    image: nonGroundImage,
+    anchor: [0, 1],
+    clickable: false,
+  });
+  tilemap.markerLayers.add(nonGroundMarkerLayer);
 }
 
 export function toggleDrawer() {

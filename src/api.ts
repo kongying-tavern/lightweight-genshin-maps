@@ -5,6 +5,7 @@ export interface Area {
   parentId: number;
   areaId: number;
   children: Area[];
+  sortIndex: number;
 }
 
 export interface AreaItem {

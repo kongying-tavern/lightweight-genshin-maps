@@ -20,16 +20,23 @@ export class AreaItemMarker {
     this.areaItem = areaItem;
     this.markers = markers;
     this.update();
-    this.createMarkerLayer(this.items).then((markerLayer) => {
-      this.markerLayer = markerLayer;
-      tilemap.markerLayers.add(markerLayer);
+    this.initMarkerLayer();
+  }
+
+  async initMarkerLayer() {
+    if (!this.markerLayer) {
+      this.markerLayer = await this.createMarkerLayer(this.items);
+      tilemap.markerLayers.add(this.markerLayer);
       tilemap.draw();
-    });
-    this.createMarkerLayer(this.markedItems, true).then((markerLayer) => {
-      this.markedMarkerLayer = markerLayer;
-      tilemap.markerLayers.add(markerLayer);
+    }
+    if (!this.markedMarkerLayer) {
+      this.markedMarkerLayer = await this.createMarkerLayer(
+        this.markedItems,
+        true
+      );
+      tilemap.markerLayers.add(this.markedMarkerLayer);
       tilemap.draw();
-    });
+    }
   }
 
   update() {
