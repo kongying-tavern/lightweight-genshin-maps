@@ -21,6 +21,8 @@ export const store = proxy({
   marked: proxySet<number>(),
   activeAreaItems: proxySet<number>(),
   nonGroundMarkers: proxySet<number>(),
+  showsTeleports: true,
+  showsMarked: true,
 });
 
 export async function init() {
