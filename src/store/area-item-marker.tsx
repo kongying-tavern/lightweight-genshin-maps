@@ -53,7 +53,7 @@ export class AreaItemMarker {
       this.markerLayer.options.items = this.items;
     }
     if (this.markedMarkerLayer) {
-      this.markedMarkerLayer.options.items = this.items;
+      this.markedMarkerLayer.options.items = this.markedItems;
     }
     tilemap.draw();
   }

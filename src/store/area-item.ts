@@ -126,6 +126,7 @@ async function fetchMarkerInfo(itemIdList: number[]) {
 }
 
 function updateNonGroundMarkerLayer() {
+  tilemap.markerLayers.delete(nonGroundMarkerLayer);
   nonGroundMarkerLayer.options.items = [];
   for (const markerInfo of nonGroundMarkerInfoList) {
     const [x, y] = markerInfo.position.split(",").map((i) => parseFloat(i));
@@ -140,6 +141,12 @@ export function toggleAreaItem(areaItem: AreaItem) {
   if (store.activeAreaItems.has(itemId)) {
     store.activeAreaItems.delete(itemId);
     areaItemMarkerMap[itemId].hideMarkerLayer();
+    for (const markerInfo of markerInfoListMap[itemId] ?? []) {
+      if (isNonGround(markerInfo)) {
+        nonGroundMarkerInfoList.delete(markerInfo);
+      }
+    }
+    updateNonGroundMarkerLayer();
   } else {
     store.activeAreaItems.add(itemId);
     activeAreaItems([areaItem.itemId]);
