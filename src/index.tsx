@@ -12,9 +12,9 @@ function Main() {
     <>
       <div ref={initTilemap} className="h-full w-full absolute"></div>
       <div className="absolute top-0 w-full h-20 bg-gradient-to-b from-black/50 to-transparent" />
+      <Settings />
       <AreaPicker />
       <Drawer />
-      <Settings />
     </>
   );
 }
