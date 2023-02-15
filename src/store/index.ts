@@ -2,7 +2,12 @@ import { proxy } from "valtio";
 import { proxySet } from "valtio/utils";
 import { Area, AreaItemType, fetchAccessToken } from "../api";
 import { initAreaList } from "./area";
-import { initAreaItemTypes, initIconMap, updateMarkerLayer } from "./area-item";
+import {
+  initAreaItemTypes,
+  initIconMap,
+  initMarkedIdList,
+  updateMarkerLayer,
+} from "./area-item";
 import { hideNonGroundMaps, showNonGroundMaps } from "./non-ground-maps";
 export * from "./area";
 export * from "./area-item";
@@ -19,7 +24,7 @@ export const store = proxy({
   isAreaPickerOpen: false,
   iconMap: {} as Record<string, string>,
   teleports: proxySet<number>(),
-  marked: proxySet<number>(),
+  markedIdList: proxySet<number>(),
   activeAreaItems: proxySet<number>(),
   nonGroundMarkers: proxySet<number>(),
   showsTeleports: true,
@@ -32,6 +37,7 @@ export async function initStore() {
   initIconMap();
   initAreaItemTypes();
   initAreaList();
+  initMarkedIdList();
 }
 
 export function toggleDrawer() {

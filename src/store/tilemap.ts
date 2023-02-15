@@ -8,7 +8,7 @@ import {
 import { closeAreaPicker } from ".";
 import nonGroundIcon from "../../images/icon-non-ground.png";
 import { teyvatMapConfig } from "../maps-config";
-import { createMarkerInfoElement } from "../marker-info";
+import { createMarkerInfoWindow } from "../marker-info-window";
 
 export let tilemap: Tilemap;
 export let nonGroundMarkerLayer: MarkerLayer;
@@ -21,7 +21,8 @@ function onTilemapClick(event?: MarkerEvent) {
     tilemap.domLayers.clear();
     tilemap.domLayers.add(
       new DomLayer(tilemap, {
-        element: createMarkerInfoElement(item),
+        // @ts-ignore
+        element: createMarkerInfoWindow(target.options.areaItem, item.data!),
         position: [item.x, item.y],
       })
     );

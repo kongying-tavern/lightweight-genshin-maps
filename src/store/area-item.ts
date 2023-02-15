@@ -1,3 +1,4 @@
+import { proxySet } from "valtio/utils";
 import { store } from ".";
 import { api, AreaItem, AreaItemType, MarkerInfo } from "../api";
 import { AreaItemMarker } from "./area-item-marker";
@@ -7,6 +8,7 @@ export const areaItemMarkerMap = {} as Record<number, AreaItemMarker>;
 const areaItemMap = {} as Record<number, AreaItem>;
 const nonGroundMarkerInfoList = new Set<MarkerInfo>();
 const markerInfoListMap = {} as Record<number, MarkerInfo[]>;
+const markedStorageKey = "markedIdList";
 
 export async function initIconMap() {
   const cacheKey = "icons";
@@ -27,6 +29,13 @@ export async function initAreaItemTypes() {
   for (const i of record as AreaItemType[]) {
     i.items = [];
     store.itemTypeMap[i.typeId] = i;
+  }
+}
+
+export function initMarkedIdList() {
+  const json = localStorage.getItem(markedStorageKey);
+  if (json) {
+    store.markedIdList = proxySet(JSON.parse(json));
   }
 }
 
@@ -166,4 +175,18 @@ export function updateMarkerLayer() {
   for (const areaItemId of [...store.activeAreaItems, ...store.teleports]) {
     areaItemMarkerMap[areaItemId]?.update();
   }
+}
+
+export function mark(markerId: number) {
+  store.markedIdList.add(markerId);
+  updateMarkerLayer();
+  const markedIdList = Array.from(store.markedIdList);
+  localStorage.setItem(markedStorageKey, JSON.stringify(markedIdList));
+}
+
+export function unmark(markerId: number) {
+  store.markedIdList.delete(markerId);
+  updateMarkerLayer();
+  const markedIdList = Array.from(store.markedIdList);
+  localStorage.setItem(markedStorageKey, JSON.stringify(markedIdList));
 }

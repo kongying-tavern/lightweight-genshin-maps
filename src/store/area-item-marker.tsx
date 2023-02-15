@@ -43,7 +43,7 @@ export class AreaItemMarker {
     });
     for (const i of markerInfoList) {
       const [x, y] = i.position.split(",").map((i) => parseFloat(i));
-      if (store.marked.has(i.id)) {
+      if (store.markedIdList.has(i.id)) {
         this.markedItems.push({ data: i, x, y });
       } else {
         this.items.push({ data: i, x, y });
@@ -96,9 +96,11 @@ export class AreaItemMarker {
             style={{ padding: (specialFlag ? 0 : padding) * devicePixelRatio }}
             src={icon}
             onLoad={async () => {
+              const { areaItem } = this;
               const image = new Image();
               image.src = await dom2img.toPng(dom);
-              resolve(new MarkerLayer(tilemap, { image, items }));
+              // @ts-ignore 给 MarkerOptions 附上 areaItem
+              resolve(new MarkerLayer(tilemap, { image, items, areaItem }));
               document.body.removeChild(dom);
             }}
           />
@@ -122,7 +124,7 @@ function MarkerDecoration(props: { marked: boolean }) {
             {cirlce}
             <path
               d="M42,13 C58.0162577,13 71,25.9837423 71,42 C71,58.0162577 58.0162577,71 42,71 C25.9837423,71 13,58.0162577 13,42 C13,25.9837423 25.9837423,13 42,13 Z M42,20 C29.8497355,20 20,29.8497355 20,42 C20,54.1502645 29.8497355,64 42,64 C54.1502645,64 64,54.1502645 64,42 C64,29.8497355 54.1502645,20 42,20 Z"
-              fill={props.marked ? "rgb(125 211 252)" : "#ffffff"}
+              fill={props.marked ? "rgb(34 211 238)" : "#ffffff"}
             />
           </g>
         </g>
