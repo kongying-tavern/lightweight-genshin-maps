@@ -8,6 +8,8 @@ import {
   initMarkedIdList,
   updateShowsMarked,
   updateMarkerLayer,
+  showTeleports,
+  hideTeleports,
 } from "./area-item";
 import { hideNonGroundMaps, showNonGroundMaps } from "./non-ground-maps";
 export * from "./area";
@@ -51,6 +53,11 @@ export function toggleAreaPicker() {
 
 export function toggleShowsTeleports() {
   store.showsTeleports = !store.showsTeleports;
+  if (store.showsTeleports) {
+    showTeleports();
+  } else {
+    hideTeleports();
+  }
 }
 
 export function toggleShowsMarked() {
