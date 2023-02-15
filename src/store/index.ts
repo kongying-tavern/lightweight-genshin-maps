@@ -3,9 +3,11 @@ import { proxySet } from "valtio/utils";
 import { Area, AreaItemType, fetchAccessToken } from "../api";
 import { initAreaList } from "./area";
 import {
+  hideTeleports,
   initAreaItemTypes,
   initIconMap,
   initMarkedIdList,
+  showTeleports,
   updateMarkerLayer,
 } from "./area-item";
 import { hideNonGroundMaps, showNonGroundMaps } from "./non-ground-maps";
@@ -27,7 +29,7 @@ export const store = proxy({
   markedIdList: proxySet<number>(),
   activeAreaItems: proxySet<number>(),
   nonGroundMarkers: proxySet<number>(),
-  showsTeleports: true,
+  showsTeleports: false,
   showsMarked: true,
   showsNonGroundOnly: false,
 });
@@ -50,6 +52,11 @@ export function toggleAreaPicker() {
 
 export function toggleShowsTeleports() {
   store.showsTeleports = !store.showsTeleports;
+  if (store.showsTeleports) {
+    showTeleports();
+  } else {
+    hideTeleports();
+  }
 }
 
 export function toggleShowsMarked() {

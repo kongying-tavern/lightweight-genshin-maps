@@ -40,12 +40,8 @@ export function initMarkedIdList() {
 }
 
 export async function initAreaItems() {
-  // 先移除之前地区的传送点位
-  for (const areaItemId of store.teleports) {
-    store.activeAreaItems.delete(areaItemId);
-    areaItemMarkerMap[areaItemId]?.hideMarkerLayer();
-    removeNonGroundMarkers(areaItemId);
-  }
+  // 先移除之前地区的传送点位及非露天图标图层
+  hideTeleports();
   tilemap.markerLayers.delete(nonGroundMarkerLayer);
 
   const { record } = await api("item/get/list", {
@@ -71,28 +67,25 @@ export async function initAreaItems() {
       store.teleports.add(areaItem.itemId);
     }
   }
-  activeAreaItems(Array.from(store.teleports));
+  if (store.showsTeleports) {
+    activeAreaItems(Array.from(store.teleports));
+  }
 }
 
-async function activeAreaItems(areaItems: number[]) {
-  const itemIdList = [] as number[];
-  for (const itemId of areaItems) {
-    const areaItemMarker = areaItemMarkerMap[itemId];
+async function activeAreaItems(areaItemIdList: number[]) {
+  const toBeFetchedIdList = [] as number[];
+  for (const areaItemId of areaItemIdList) {
+    const areaItemMarker = areaItemMarkerMap[areaItemId];
     if (areaItemMarker) {
       areaItemMarker.showMarkerLayer();
-      // 更新非露天点位
-      for (const markerInfo of markerInfoListMap[itemId] ?? []) {
-        if (isNonGround(markerInfo)) {
-          nonGroundMarkerInfoList.add(markerInfo);
-        }
-      }
+      addNonGroundMarkers(areaItemId);
     } else {
-      itemIdList.push(itemId);
+      toBeFetchedIdList.push(areaItemId);
     }
   }
 
-  if (itemIdList.length) {
-    fetchMarkerInfo(itemIdList);
+  if (toBeFetchedIdList.length) {
+    fetchMarkerInfo(toBeFetchedIdList);
   } else {
     updateNonGroundMarkerLayer();
   }
@@ -132,6 +125,30 @@ async function fetchMarkerInfo(itemIdList: number[]) {
   updateNonGroundMarkerLayer();
 }
 
+export function hideTeleports() {
+  for (const areaItemId of store.teleports) {
+    store.activeAreaItems.delete(areaItemId);
+    areaItemMarkerMap[areaItemId]?.hideMarkerLayer();
+    removeNonGroundMarkers(areaItemId);
+  }
+  updateNonGroundMarkerLayer();
+}
+
+export function showTeleports() {
+  if (store.teleports.size == 0) return;
+  const teleports = Array.from(store.teleports);
+  if (!areaItemMarkerMap[teleports[0]]) {
+    return activeAreaItems(teleports);
+  }
+
+  for (const areaItemId of store.teleports) {
+    store.activeAreaItems.add(areaItemId);
+    areaItemMarkerMap[areaItemId]?.showMarkerLayer();
+    addNonGroundMarkers(areaItemId);
+  }
+  updateNonGroundMarkerLayer();
+}
+
 function updateNonGroundMarkerLayer() {
   tilemap.markerLayers.delete(nonGroundMarkerLayer);
   nonGroundMarkerLayer.options.items = [];
@@ -143,13 +160,18 @@ function updateNonGroundMarkerLayer() {
   tilemap.draw();
 }
 
-/**
- * 移除非露天点位
- */
 function removeNonGroundMarkers(areaItemId: number) {
   for (const markerInfo of markerInfoListMap[areaItemId] ?? []) {
     if (isNonGround(markerInfo)) {
       nonGroundMarkerInfoList.delete(markerInfo);
+    }
+  }
+}
+
+function addNonGroundMarkers(areaItemId: number) {
+  for (const markerInfo of markerInfoListMap[areaItemId] ?? []) {
+    if (isNonGround(markerInfo)) {
+      nonGroundMarkerInfoList.add(markerInfo);
     }
   }
 }
