@@ -11,7 +11,7 @@ export function Settings() {
     <div className="absolute bottom-4 left-4 flex flex-col gap-2">
       <Switch
         defaultValue={store.showsNonGroundOnly}
-        label="仅显示非露天点位"
+        label="地下地图"
         onChange={toggleShowsNonGroundOnly}
       />
       <Switch

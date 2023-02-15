@@ -3,7 +3,7 @@ import { render } from "react-dom";
 import { AreaPicker } from "./area-picker";
 import { Drawer } from "./drawer";
 import { Settings } from "./settings";
-import { init, initTilemap } from "./store";
+import { initStore, initTilemap } from "./store";
 
 window.React = React;
 
@@ -19,5 +19,5 @@ function Main() {
   );
 }
 
-init();
+initStore();
 render(<Main />, document.getElementById("main"));
