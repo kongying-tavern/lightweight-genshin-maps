@@ -2,7 +2,7 @@ import { Switch } from "./components/switch";
 import {
   store,
   toggleShowsMarked,
-  toggleShowsNonGroundOnly,
+  toggleShowsNonGround,
   toggleShowsTeleports,
 } from "./store";
 
@@ -10,9 +10,9 @@ export function Settings() {
   return (
     <div className="absolute bottom-4 left-4 flex flex-col gap-2">
       <Switch
-        defaultValue={store.showsNonGroundOnly}
+        defaultValue={store.showsNonGround}
         label="地下地图"
-        onChange={toggleShowsNonGroundOnly}
+        onChange={toggleShowsNonGround}
       />
       <Switch
         defaultValue={store.showsTeleports}

@@ -39,7 +39,7 @@ export class AreaItemMarker {
     this.items = [];
     this.markedItems = [];
     const markerInfoList = this.markerInfoList.filter((i) => {
-      return !store.showsNonGroundOnly || isNonGround(i);
+      return !store.showsNonGround || isNonGround(i);
     });
     for (const i of markerInfoList) {
       const [x, y] = i.position.split(",").map((i) => parseFloat(i));
@@ -62,16 +62,24 @@ export class AreaItemMarker {
     if (this.markerLayer) {
       tilemap.markerLayers.delete(this.markerLayer);
     }
-    if (this.markedMarkerLayer) {
-      tilemap.markerLayers.delete(this.markedMarkerLayer);
-    }
-    tilemap.draw();
+    this.hideMarked();
   }
 
   showMarkerLayer() {
     if (this.markerLayer) {
       tilemap.markerLayers.add(this.markerLayer);
     }
+    this.showMarked();
+  }
+
+  hideMarked() {
+    if (this.markedMarkerLayer) {
+      tilemap.markerLayers.delete(this.markedMarkerLayer);
+    }
+    tilemap.draw();
+  }
+
+  showMarked() {
     if (this.markedMarkerLayer) {
       tilemap.markerLayers.add(this.markedMarkerLayer);
     }

@@ -212,3 +212,23 @@ export function unmark(markerId: number) {
   const markedIdList = Array.from(store.markedIdList);
   localStorage.setItem(markedStorageKey, JSON.stringify(markedIdList));
 }
+
+export function updateShowsMarked() {
+  for (const areaItemId in areaItemMarkerMap) {
+    const markerLayer = areaItemMarkerMap[areaItemId];
+    if (store.showsMarked) {
+      markerLayer.showMarked();
+    } else {
+      markerLayer.hideMarked();
+    }
+    for (const markerInfo of markerInfoListMap[areaItemId] ?? []) {
+      if (!isNonGround(markerInfo)) continue;
+      if (store.showsMarked) {
+        nonGroundMarkerInfoList.add(markerInfo);
+      } else {
+        nonGroundMarkerInfoList.delete(markerInfo);
+      }
+    }
+  }
+  updateNonGroundMarkerLayer();
+}
