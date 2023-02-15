@@ -47,6 +47,10 @@ export function toggleDrawer() {
   store.isDrawerOpen = !store.isDrawerOpen;
 }
 
+export function closeDrawer() {
+  store.isDrawerOpen = false;
+}
+
 export function toggleAreaPicker() {
   store.isAreaPickerOpen = !store.isAreaPickerOpen;
 }

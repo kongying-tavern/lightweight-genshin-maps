@@ -10,8 +10,8 @@ window.React = React;
 function Main() {
   return (
     <>
-      <div ref={initTilemap} className="h-full w-full absolute"></div>
-      <div className="absolute top-0 w-full h-16 md:h-20 bg-gradient-to-b from-black/50 to-transparent" />
+      <div ref={initTilemap} className="h-full w-full absolute" />
+      <div className="absolute pointer-events-none top-0 w-full h-16 md:h-20 bg-gradient-to-b from-black/50 to-transparent" />
       <Settings />
       <Drawer />
       <AreaPicker />

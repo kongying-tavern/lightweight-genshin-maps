@@ -5,13 +5,14 @@ import {
   TileLayer,
   Tilemap,
 } from "@7c00/canvas-tilemap";
-import { closeAreaPicker } from ".";
+import { closeAreaPicker, closeDrawer, tileLayerMap } from ".";
 import nonGroundIcon from "../../images/icon-non-ground.png";
 import { teyvatMapConfig } from "../maps-config";
 import { createMarkerInfoWindow } from "../marker-info-window";
 
 export let tilemap: Tilemap;
 export let nonGroundMarkerLayer: MarkerLayer;
+let teyvatTileLayer: TileLayer;
 
 function onTilemapClick(event?: MarkerEvent) {
   if (event) {
@@ -31,7 +32,11 @@ function onTilemapClick(event?: MarkerEvent) {
     tilemap.domLayers.clear();
     tilemap.draw();
   }
+
   closeAreaPicker();
+  if (window.innerWidth < 768) {
+    closeDrawer();
+  }
 }
 
 export async function initTilemap(element: HTMLElement | null) {
@@ -42,13 +47,13 @@ export async function initTilemap(element: HTMLElement | null) {
     element,
     onClick: onTilemapClick,
   });
-  tilemap.tileLayers.add(
-    new TileLayer(tilemap, {
-      minZoom: 10,
-      maxZoom: 13,
-      getTileUrl: teyvatMapConfig.getTileUrl,
-    })
-  );
+  teyvatTileLayer = new TileLayer(tilemap, {
+    minZoom: 10,
+    maxZoom: 13,
+    getTileUrl: teyvatMapConfig.getTileUrl,
+  });
+  tileLayerMap.set(teyvatMapConfig, teyvatTileLayer);
+  tilemap.tileLayers.add(teyvatTileLayer);
   nonGroundMarkerLayer = new MarkerLayer(tilemap, {
     items: [],
     image: await createImage(nonGroundIcon, 16, 16),

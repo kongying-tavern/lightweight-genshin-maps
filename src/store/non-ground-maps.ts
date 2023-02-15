@@ -1,5 +1,5 @@
 import { ImageBounds, ImageLayer } from "@7c00/canvas-tilemap";
-import { undergroundMaps } from "./non-ground-maps-data";
+import { nonGroundMaps } from "./non-ground-maps-data";
 import { tilemap } from "./tilemap";
 
 let nonGroundMaskLayer: ImageLayer;
@@ -61,14 +61,14 @@ function hideImageLayer(url: string) {
 
 export function showNonGroundMaps() {
   showNonGroundMaskLayer();
-  for (const [_, { imageUrl, imageBounds }] of undergroundMaps) {
+  for (const [_, { imageUrl, imageBounds }] of nonGroundMaps) {
     showImageLayer(imageUrl, imageBounds);
   }
 }
 
 export function hideNonGroundMaps() {
   hideNonGroundMaskLayer();
-  for (const [_, { imageUrl }] of undergroundMaps) {
+  for (const [_, { imageUrl }] of nonGroundMaps) {
     hideImageLayer(imageUrl);
   }
   tilemap.draw();
