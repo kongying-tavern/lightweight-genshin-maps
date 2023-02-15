@@ -15,10 +15,9 @@ export function Drawer() {
   const { isDrawerOpen } = useSnapshot(store);
   return (
     <div
-      className="flex flex-col w-72 h-full absolute top-20 right-2 duration-300 ease-out"
+      className="flex flex-col w-72 h-[calc(100%-4rem)] md:h-[calc(100%-5rem)] absolute top-16 md:top-20 right-2 duration-300 ease-out"
       style={{
-        height: "calc(100% - 5rem)",
-        transform: `translate(${isDrawerOpen ? 0 : 17}rem, 0)`,
+        transform: `translate(${isDrawerOpen ? 0 : 276}px, 0)`,
       }}
     >
       <ToggleButton />

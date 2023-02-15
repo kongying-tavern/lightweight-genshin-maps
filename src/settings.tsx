@@ -8,7 +8,7 @@ import {
 
 export function Settings() {
   return (
-    <div className="absolute bottom-4 left-4 flex flex-col gap-2">
+    <div className="absolute bottom-4 left-4 flex flex-col gap-1.5">
       <Switch
         defaultValue={store.showsNonGround}
         label="地下地图"

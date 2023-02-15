@@ -180,7 +180,7 @@ export function toggleAreaItem(areaItem: AreaItem) {
   const { itemId } = areaItem;
   if (store.activeAreaItems.has(itemId)) {
     store.activeAreaItems.delete(itemId);
-    areaItemMarkerMap[itemId].hideMarkerLayer();
+    areaItemMarkerMap[itemId]?.hideMarkerLayer();
     removeNonGroundMarkers(itemId);
     updateNonGroundMarkerLayer();
   } else {
