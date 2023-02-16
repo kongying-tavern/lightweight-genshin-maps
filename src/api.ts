@@ -1,4 +1,4 @@
-import { store } from "./store";
+import { refreshAccessToken, store } from "./store";
 
 export interface Area {
   name: string;
@@ -13,6 +13,7 @@ export interface AreaItem {
   areaId: number;
   count: number;
   defaultCountent: string;
+  defaultRefreshTime: number;
   iconTag: string;
   iconStyleType: number;
   specialFlag: number;
@@ -37,7 +38,10 @@ export interface MarkerInfo {
   itemList: AreaItem[];
 }
 
-export async function api(path: string, params: Record<string, any> = {}) {
+export async function api(
+  path: string,
+  params: Record<string, any> = {}
+): Promise<any> {
   const response = await fetch(`https://cloud.yuanshen.site/api/${path}`, {
     method: "post",
     body: JSON.stringify(params),
@@ -46,6 +50,10 @@ export async function api(path: string, params: Record<string, any> = {}) {
       authorization: `Bearer ${store.accessToken}`,
     },
   });
+  if (response.status == 401) {
+    await refreshAccessToken();
+    return api(path, params);
+  }
   return (await response.json())["data"];
 }
 

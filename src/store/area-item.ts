@@ -10,7 +10,7 @@ const nonGroundMarkerInfoList = new Set<MarkerInfo>();
 const markerInfoListMap = {} as Record<number, MarkerInfo[]>;
 const markedStorageKey = "markedIdList";
 
-export async function initIconMap() {
+export async function initIcons() {
   const cacheKey = "icons";
   let iconMap = {};
   try {
@@ -42,7 +42,9 @@ export function initMarkedIdList() {
 export async function initAreaItems() {
   // 先移除之前地区的传送点位及非露天图标图层
   hideTeleports();
-  tilemap.markerLayers.delete(nonGroundMarkerLayer);
+  if (nonGroundMarkerLayer) {
+    tilemap.markerLayers.delete(nonGroundMarkerLayer);
+  }
 
   const { record } = await api("item/get/list", {
     areaIdList: [store.activeSubArea.areaId],
@@ -57,7 +59,7 @@ export async function initAreaItems() {
     areaItemMap[areaItem.itemId] = areaItem;
     for (const typeId of areaItem.typeIdList) {
       const itemType = store.itemTypeMap[typeId];
-      if (itemType) {
+      if (itemType && areaItem.count > 0 && !areaItem.specialFlag) {
         itemType.items.push(areaItem);
       } else {
         // TODO: 宝箱特殊处理
@@ -150,6 +152,8 @@ export function showTeleports() {
 }
 
 function updateNonGroundMarkerLayer() {
+  if (!nonGroundMarkerLayer) return;
+
   tilemap.markerLayers.delete(nonGroundMarkerLayer);
   nonGroundMarkerLayer.options.items = [];
   for (const markerInfo of nonGroundMarkerInfoList) {

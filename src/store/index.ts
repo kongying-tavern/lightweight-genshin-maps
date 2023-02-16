@@ -4,7 +4,7 @@ import { Area, AreaItemType, fetchAccessToken } from "../api";
 import { initAreaList } from "./area";
 import {
   initAreaItemTypes,
-  initIconMap,
+  initIcons,
   initMarkedIdList,
   updateShowsMarked,
   updateMarkerLayer,
@@ -36,8 +36,8 @@ export const store = proxy({
 });
 
 export async function initStore() {
-  store.accessToken = await fetchAccessToken();
-  initIconMap();
+  initAccessToken();
+  initIcons();
   initAreaItemTypes();
   initAreaList();
   initMarkedIdList();
@@ -81,4 +81,13 @@ export function toggleShowsNonGround() {
 
 export function closeAreaPicker() {
   store.isAreaPickerOpen = false;
+}
+
+function initAccessToken() {
+  store.accessToken = localStorage.getItem("accessToken") ?? "";
+}
+
+export async function refreshAccessToken() {
+  store.accessToken = await fetchAccessToken();
+  localStorage.setItem("accessToken", store.accessToken);
 }

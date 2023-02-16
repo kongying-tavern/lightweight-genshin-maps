@@ -26,7 +26,8 @@ function MarkerInfoWindow(props: MarkerInfoWindowProps) {
   const { markedIdList } = useSnapshot(store);
   const marked = markedIdList.has(props.id);
   let markButton = null;
-  if (!props.areaItem.specialFlag) {
+  const { areaItem } = props;
+  if (!areaItem.specialFlag && areaItem.defaultRefreshTime == 0) {
     const buttonClass = "flex-1 rounded-full text-center border border-solid";
     markButton = (
       <div className="h-5 p-0.5 mt-1 rounded-full border border-yellow-900/50 border-solid flex">

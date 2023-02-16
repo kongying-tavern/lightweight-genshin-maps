@@ -76,10 +76,9 @@ function AreaItemTypes() {
 function TypeItem(props: { itemType: AreaItemType }) {
   const { iconMap } = useSnapshot(store);
   const { selected } = useSnapshot(state);
-  let { name, iconTag, typeId, items } = props.itemType;
+  const { name, iconTag, typeId, items } = props.itemType;
   const isSelected = selected.has(typeId);
   const icon = iconMap[iconTag || `icon_${name}`];
-  items = items.filter((i) => !i.specialFlag && i.count > 0);
   const height = 2.5 * Math.ceil(items.length / 2) + 0.5;
   return (
     <div
