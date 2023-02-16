@@ -33,6 +33,7 @@ export const store = proxy({
   showsTeleports: false,
   showsMarked: true,
   showsNonGround: false,
+  showsLevelSwitch: false,
 });
 
 export async function initStore() {

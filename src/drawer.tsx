@@ -108,7 +108,7 @@ function TypeItem(props: { itemType: AreaItemType }) {
         className="overflow-hidden duration-300 ease-out"
         style={{ height: `${isSelected ? height : 0}rem` }}
       >
-        <div className="h-2" />
+        <div className="h-3" onClick={() => {}} />
         <AreaItems items={items} isSelected={isSelected} />
       </div>
     </div>
@@ -118,12 +118,12 @@ function TypeItem(props: { itemType: AreaItemType }) {
 function AreaItems(props: { items: AreaItem[]; isSelected: boolean }) {
   const { activeAreaItems } = useSnapshot(store);
   return (
-    <div className="grid grid-cols-2 gap-x-1">
+    <div className="grid grid-cols-2 gap-1">
       {props.items.map((i) => {
         const active = activeAreaItems.has(i.itemId);
         return (
           <div
-            className="text-xs mt-1"
+            className="text-xs"
             style={{ background: active ? "#424b63" : "#f6f6f6" }}
             onClick={(event) => {
               event.stopPropagation();

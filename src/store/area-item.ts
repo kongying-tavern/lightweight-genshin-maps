@@ -2,7 +2,8 @@ import { proxySet } from "valtio/utils";
 import { store } from ".";
 import { api, AreaItem, AreaItemType, MarkerInfo } from "../api";
 import { AreaItemMarker } from "./area-item-marker";
-import { nonGroundMarkerLayer, tilemap } from "./tilemap";
+import { nonGroundMarkerLayer } from "./non-ground-maps";
+import { tilemap } from "./tilemap";
 
 export const areaItemMarkerMap = {} as Record<number, AreaItemMarker>;
 const areaItemMap = {} as Record<number, AreaItem>;
