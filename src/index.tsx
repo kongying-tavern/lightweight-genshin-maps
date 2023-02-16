@@ -20,4 +20,4 @@ function Main() {
 }
 
 initStore();
-render(<Main />, document.getElementById("main"));
+render(<Main />, document.getElementById("main")!);

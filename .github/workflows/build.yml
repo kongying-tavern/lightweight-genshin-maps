@@ -2,16 +2,17 @@ name: release
 on:
   push:
     branches: [main]
-permissions:
-  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
       - run: npm i
       - run: npm run build
       - run: cp index.html dist/
+      - run: npm run build-html
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist

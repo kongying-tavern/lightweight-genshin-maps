@@ -10,9 +10,9 @@ export function createMarkerInfoWindow(
 ) {
   const element = document.createElement("div");
   const { classList } = element;
-  classList.add("relative", "-left-1/2", "w-56", "bg-orange-50", "shadow");
-  classList.add("rounded-lg", "text-sm", "flex", "flex-col", "gap-2", "marker");
-  classList.add("p-3");
+  classList.add("marker");
+  classList.add("relative", "-left-1/2", "w-56", "bg-orange-50", "shadow-lg");
+  classList.add("rounded-lg", "text-sm", "flex", "flex-col", "gap-2", "p-3");
   element.style.top = "calc(-100% - 46px)";
   render(<MarkerInfoWindow {...markerInfo} areaItem={areaItem} />, element);
   return element;
