@@ -1,12 +1,11 @@
-import {
-  DomLayer,
-  ImageBounds,
-  ImageLayer,
-  MarkerLayer,
-} from "@7c00/canvas-tilemap";
+import { ImageBounds, ImageLayer, MarkerLayer } from "@7c00/canvas-tilemap";
 import nonGroundIcon from "../../images/icon-non-ground.png";
 import { MultiLevelMaps } from "./multi-level-maps";
-import { nonGroundMaps, nonGroundMaps2 } from "./non-ground-maps-data";
+import {
+  nonGroundMaps,
+  nonGroundMaps2,
+  nonGroundMaps3,
+} from "./non-ground-maps-data";
 import { tilemap } from "./tilemap";
 
 export let nonGroundMarkerLayer: MarkerLayer;
@@ -115,6 +114,11 @@ export async function initNonGroundMaps() {
   for (const levels of nonGroundMaps2) {
     multiLevelMaps.push(
       new MultiLevelMaps(levels, "https://assets.yuanshen.site/overlay/SM")
+    );
+  }
+  for (const levels of nonGroundMaps3) {
+    multiLevelMaps.push(
+      new MultiLevelMaps(levels, "https://assets.yuanshen.site/overlay")
     );
   }
 }

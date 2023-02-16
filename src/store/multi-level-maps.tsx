@@ -73,7 +73,7 @@ export function LevelSwitch({ maps }: { maps: MultiLevelMaps }) {
       {maps.levels.map((i, index) => (
         <div
           className={classNames(
-            "w-20 h-6 rounded text-sm flex items-center justify-center duration-100 ease-out",
+            "w-20 h-6 whitespace-nowrap overflow-hidden rounded text-sm flex items-center justify-center duration-100 ease-out",
             index == level ? "bg-cyan-600 text-white" : "bg-orange-50",
             showsLevelSwitch ? "opacity-100" : "opacity-0"
           )}
