@@ -37,9 +37,10 @@ export const store = proxy({
 
 export async function initStore() {
   initAccessToken();
-  initIcons();
-  initAreaItemTypes();
-  initAreaList();
+  initAreaItemTypes().then(() => {
+    initIcons();
+    initAreaList();
+  });
   initMarkedIdList();
 }
 
