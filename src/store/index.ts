@@ -3,18 +3,15 @@ import { proxySet } from "valtio/utils";
 import { Area, AreaItemType, fetchAccessToken } from "../api";
 import { initAreaList } from "./area";
 import {
+  hideTeleport,
   initAreaItemTypes,
   initIcons,
-  initMarkedIdList,
-  updateShowsMarked,
+  loadMarkedSet,
+  showTeleport,
   updateMarkerLayer,
-  showTeleports,
-  hideTeleports,
+  updateMarkedMarkers,
 } from "./area-item";
 import { hideNonGroundMaps, showNonGroundMaps } from "./non-ground-maps";
-export * from "./area";
-export * from "./area-item";
-export * from "./tilemap";
 
 export const store = proxy({
   accessToken: "",
@@ -27,22 +24,22 @@ export const store = proxy({
   isAreaPickerOpen: false,
   iconMap: {} as Record<string, string>,
   teleports: proxySet<number>(),
-  markedIdList: proxySet<number>(),
+  markedSet: proxySet<number>(),
   activeAreaItems: proxySet<number>(),
   nonGroundMarkers: proxySet<number>(),
-  showsTeleports: false,
-  showsMarked: true,
-  showsNonGround: false,
-  showsLevelSwitch: false,
+  teleportVisible: false,
+  markedVisible: true,
+  nonGroundEnabled: false,
+  levelSwitchVisible: false,
 });
 
 export async function initStore() {
-  initAccessToken();
+  store.accessToken = localStorage.getItem("accessToken") ?? "";
   initAreaItemTypes().then(() => {
     initIcons();
     initAreaList();
   });
-  initMarkedIdList();
+  loadMarkedSet();
 }
 
 export function toggleDrawer() {
@@ -57,24 +54,24 @@ export function toggleAreaPicker() {
   store.isAreaPickerOpen = !store.isAreaPickerOpen;
 }
 
-export function toggleShowsTeleports() {
-  store.showsTeleports = !store.showsTeleports;
-  if (store.showsTeleports) {
-    showTeleports();
+export function toggleTeleport() {
+  store.teleportVisible = !store.teleportVisible;
+  if (store.teleportVisible) {
+    showTeleport();
   } else {
-    hideTeleports();
+    hideTeleport();
   }
 }
 
-export function toggleShowsMarked() {
-  store.showsMarked = !store.showsMarked;
-  updateShowsMarked();
+export function toggleMarkedVisible() {
+  store.markedVisible = !store.markedVisible;
+  updateMarkedMarkers();
 }
 
-export function toggleShowsNonGround() {
-  store.showsNonGround = !store.showsNonGround;
+export function toggleNonGround() {
+  store.nonGroundEnabled = !store.nonGroundEnabled;
   updateMarkerLayer();
-  if (store.showsNonGround) {
+  if (store.nonGroundEnabled) {
     showNonGroundMaps();
   } else {
     hideNonGroundMaps();
@@ -83,10 +80,6 @@ export function toggleShowsNonGround() {
 
 export function closeAreaPicker() {
   store.isAreaPickerOpen = false;
-}
-
-function initAccessToken() {
-  store.accessToken = localStorage.getItem("accessToken") ?? "";
 }
 
 export async function refreshAccessToken() {

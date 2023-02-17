@@ -3,14 +3,17 @@ import classNames from "classnames";
 import { render } from "preact";
 import { useState } from "react";
 import { useSnapshot } from "valtio";
-import { store } from ".";
-import { getImageLayer } from "./non-ground-maps";
-import { NonGroundMap } from "./non-ground-maps-data";
-import { tilemap } from "./tilemap";
+import { store } from "./store";
+import { getImageLayer } from "./store/non-ground-maps";
+import { NonGroundMap } from "./store/non-ground-maps-data";
+import { tilemap } from "./store/tilemap";
 
+/**
+ * 多层地图，提供楼层切换组件及功能
+ */
 export class MultiLevelMaps {
   levels: NonGroundMap[];
-  domLayer?: DomLayer;
+  switch?: DomLayer;
   level = 0;
 
   constructor(levels: NonGroundMap[]) {
@@ -28,40 +31,40 @@ export class MultiLevelMaps {
       }
       const element = document.createElement("div");
       const position = [minX, maxY] as [number, number];
-      this.domLayer = new DomLayer(tilemap, { element: element, position });
+      this.switch = new DomLayer(tilemap, { element: element, position });
       render(<LevelSwitch maps={this} />, element);
     }
   }
 
   async show() {
-    this.addSwitch();
-    const layer = await this.getLayer(this.level);
+    this.showSwitch();
+    const layer = await this.getImageLayer(this.level);
     if (layer) {
       tilemap.imageLayers.add(layer);
     }
   }
 
   async hide() {
-    this.removeSwitch();
-    const layer = await this.getLayer(this.level);
+    this.hideSwitch();
+    const layer = await this.getImageLayer(this.level);
     if (layer) {
       tilemap.imageLayers.delete(layer);
     }
   }
 
-  async addSwitch() {
-    if (this.domLayer && !tilemap.domLayers.has(this.domLayer)) {
-      tilemap.domLayers.add(this.domLayer);
+  async showSwitch() {
+    if (this.switch && !tilemap.domLayers.has(this.switch)) {
+      tilemap.domLayers.add(this.switch);
     }
   }
 
-  async removeSwitch() {
-    if (this.domLayer && tilemap.domLayers.has(this.domLayer)) {
-      tilemap.domLayers.delete(this.domLayer);
+  async hideSwitch() {
+    if (this.switch && tilemap.domLayers.has(this.switch)) {
+      tilemap.domLayers.delete(this.switch);
     }
   }
 
-  getLayer(index: number) {
+  getImageLayer(index: number) {
     const { url, bounds } = this.levels[index];
     if (url && bounds) {
       return getImageLayer(url, bounds);
@@ -69,11 +72,11 @@ export class MultiLevelMaps {
   }
 
   async setLevel(level: number) {
-    let layer = await this.getLayer(this.level);
+    let layer = await this.getImageLayer(this.level);
     if (layer) {
       tilemap.imageLayers.delete(layer);
     }
-    layer = await this.getLayer(level);
+    layer = await this.getImageLayer(level);
     if (layer) {
       tilemap.imageLayers.add(layer);
     }
@@ -82,8 +85,11 @@ export class MultiLevelMaps {
   }
 }
 
+/**
+ * 楼层切换
+ */
 export function LevelSwitch({ maps }: { maps: MultiLevelMaps }) {
-  const { showsLevelSwitch } = useSnapshot(store);
+  const { levelSwitchVisible } = useSnapshot(store);
   const [level, setLevel] = useState(maps.level);
   return (
     <div className="flex flex-col gap-1">
@@ -92,7 +98,7 @@ export function LevelSwitch({ maps }: { maps: MultiLevelMaps }) {
           className={classNames(
             "w-20 h-6 whitespace-nowrap overflow-hidden rounded text-xs flex items-center justify-center duration-100 ease-out",
             index == level ? "bg-cyan-600 text-white" : "bg-orange-50",
-            showsLevelSwitch ? "opacity-100" : "opacity-0"
+            levelSwitchVisible ? "opacity-100" : "opacity-0"
           )}
           onClick={() => {
             setLevel(index);

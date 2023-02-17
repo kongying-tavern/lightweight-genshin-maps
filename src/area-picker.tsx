@@ -1,7 +1,8 @@
 import classNames from "classnames";
 import { useSnapshot } from "valtio";
 import compassIcon from "../images/icon-compass.png";
-import { activateArea, store, toggleAreaPicker } from "./store";
+import { store, toggleAreaPicker } from "./store";
+import { activateArea } from "./store/area";
 import { AreaIconName, areaIcons } from "./store/area-icons";
 
 export function AreaPicker() {

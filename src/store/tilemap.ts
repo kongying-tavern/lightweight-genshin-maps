@@ -4,14 +4,27 @@ import {
   TileLayer,
   Tilemap,
 } from "@7c00/canvas-tilemap";
-import { closeAreaPicker, closeDrawer, store, tileLayerMap } from ".";
-import { teyvatMapConfig } from "../maps-config";
+import { closeAreaPicker, closeDrawer, store } from ".";
+import {
+  enkanomiyaMap,
+  MapOptions,
+  teyvatMap,
+  theChasmUndergroundMap,
+} from "../maps-config";
 import { createMarkerInfoWindow } from "../marker-info-window";
 import { initNonGroundMaps } from "./non-ground-maps";
 
+const defaultMapOptions = { minZoom: 10, maxZoom: 13 };
 export let tilemap: Tilemap;
-let teyvatTileLayer: TileLayer;
+export const tileLayerMap = new Map<MapOptions, TileLayer>();
+let defaultTileLayer: TileLayer;
 let markerInfoLayer: DomLayer | null;
+let mapOptions = teyvatMap;
+const mapOptionsMap: Record<number, MapOptions> = {
+  4: theChasmUndergroundMap,
+  15: enkanomiyaMap,
+  16: enkanomiyaMap,
+};
 
 function onTilemapClick(event?: MarkerEvent) {
   if (event) {
@@ -42,11 +55,11 @@ function onTilemapClick(event?: MarkerEvent) {
   }
 }
 
-function onMove() {
+function onTilemapMove() {
   if (Math.log2(tilemap.scale) > -2) {
-    store.showsLevelSwitch = true;
+    store.levelSwitchVisible = true;
   } else {
-    store.showsLevelSwitch = false;
+    store.levelSwitchVisible = false;
   }
 }
 
@@ -54,17 +67,41 @@ export async function initTilemap(element: HTMLElement | null) {
   if (!element) return;
 
   tilemap = new Tilemap({
-    ...teyvatMapConfig,
+    ...teyvatMap,
     element,
     onClick: onTilemapClick,
-    onMove: onMove,
+    onMove: onTilemapMove,
   });
-  teyvatTileLayer = new TileLayer(tilemap, {
-    minZoom: 10,
-    maxZoom: 13,
-    getTileUrl: teyvatMapConfig.getTileUrl,
+  const { getTileUrl } = teyvatMap;
+  defaultTileLayer = new TileLayer(tilemap, {
+    ...defaultMapOptions,
+    getTileUrl,
   });
-  tileLayerMap.set(teyvatMapConfig, teyvatTileLayer);
-  tilemap.tileLayers.add(teyvatTileLayer);
+  tileLayerMap.set(teyvatMap, defaultTileLayer);
+  tilemap.tileLayers.add(defaultTileLayer);
   initNonGroundMaps();
+}
+
+/**
+ * 根据地区切换地图配置、底图
+ */
+export function updateTilemap(areaId: number) {
+  const config = mapOptionsMap[areaId] ?? teyvatMap;
+  if (mapOptions != config) {
+    mapOptions = config;
+    const { options, element } = tilemap;
+    options.maxZoom = config.maxZoom ?? 0;
+    options.origin = config.origin;
+    options.size = config.size;
+    options.tileOffset = config.tileOffset ?? [0, 0];
+    tilemap.resize(element.clientWidth, element.clientHeight);
+    tilemap.tileLayers.clear();
+    let tileLayer = tileLayerMap.get(config);
+    if (!tileLayer) {
+      const { getTileUrl } = config;
+      tileLayer = new TileLayer(tilemap, { ...defaultMapOptions, getTileUrl });
+      tileLayerMap.set(config, tileLayer);
+    }
+    tilemap.tileLayers.add(tileLayer);
+  }
 }

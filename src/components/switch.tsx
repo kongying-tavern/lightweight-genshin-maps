@@ -1,7 +1,7 @@
-import { useState, HTMLAttributes } from "react";
-import switchOnImage from "../../images/switch-on.png";
-import switchOffImage from "../../images/switch-off.png";
 import classNames from "classnames";
+import { HTMLAttributes, useState } from "react";
+import switchOffImage from "../../images/switch-off.png";
+import switchOnImage from "../../images/switch-on.png";
 
 interface Props
   extends Omit<HTMLAttributes<HTMLDivElement>, "defaultValue" | "onChange"> {
@@ -20,7 +20,10 @@ export function Switch({
   return (
     <div
       {...props}
-      className={classNames("h-6 gap-2 flex items-center", props.className)}
+      className={classNames(
+        "h-6 gap-2 flex items-center",
+        props.className as string
+      )}
       onClick={() => {
         setValue(!value);
         onChange(!value);

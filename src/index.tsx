@@ -1,9 +1,10 @@
-import React from "react";
+import * as React from "react";
 import { render } from "react-dom";
 import { AreaPicker } from "./area-picker";
 import { Drawer } from "./drawer";
 import { Settings } from "./settings";
-import { initStore, initTilemap } from "./store";
+import { initStore } from "./store";
+import { initTilemap } from "./store/tilemap";
 
 window.React = React;
 

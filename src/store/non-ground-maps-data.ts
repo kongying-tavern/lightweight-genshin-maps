@@ -213,7 +213,7 @@ export const nonGroundMaps: NonGroundMap[] = [
   },
 ];
 
-export const nonGroundMaps2: NonGroundMap[][] = [
+export const multiLevelNonGroundMaps: NonGroundMap[][] = [
   [
     {
       name: "秘仪圣殿 - 上",

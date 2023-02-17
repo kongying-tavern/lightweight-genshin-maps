@@ -1,11 +1,7 @@
-import { TileLayer } from "@7c00/canvas-tilemap";
-import { store, tilemap } from ".";
+import { store } from ".";
 import { api, Area } from "../api";
-import { getMapConfig, MapConfig, teyvatMapConfig } from "../maps-config";
-import { initAreaItems } from "./area-item";
-
-let mapConfig = teyvatMapConfig;
-export const tileLayerMap = new Map<MapConfig, TileLayer>();
+import { updateAreaItems } from "./area-item";
+import { updateTilemap } from "./tilemap";
 
 /**
  * 初始化地区列表
@@ -21,7 +17,7 @@ export async function initAreaList() {
   } catch (_) {}
   updateAreaList(areaList ?? []);
   if (store.activeSubArea) {
-    initAreaItems();
+    updateAreaItems();
     areaItemsInitialized = true;
   }
 
@@ -32,7 +28,7 @@ export async function initAreaList() {
   localStorage.setItem(cacheKey, JSON.stringify(areaList));
   updateAreaList(areaList);
   if (!areaItemsInitialized) {
-    initAreaItems();
+    updateAreaItems();
   }
 }
 
@@ -71,25 +67,6 @@ export function activateArea(areaId: number) {
   const subArea = store.areaMap[areaId];
   store.activeTopArea = store.areaMap[subArea.parentId];
   store.activeSubArea = subArea;
-  const config = getMapConfig(areaId);
-  if (mapConfig != config) {
-    mapConfig = config;
-    const { options, element } = tilemap;
-    options.maxZoom = config.maxZoom ?? 0;
-    options.origin = config.origin;
-    options.size = config.size;
-    options.tileOffset = config.tileOffset ?? [0, 0];
-    tilemap.resize(element.clientWidth, element.clientHeight);
-    tilemap.tileLayers.clear();
-    let tileLayer = tileLayerMap.get(config);
-    if (!tileLayer) {
-      tileLayer = new TileLayer(tilemap, {
-        minZoom: 10,
-        maxZoom: 13,
-        getTileUrl: config.getTileUrl,
-      });
-    }
-    tilemap.tileLayers.add(tileLayer);
-  }
-  initAreaItems();
+  updateTilemap(areaId);
+  updateAreaItems();
 }

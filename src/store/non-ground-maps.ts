@@ -1,14 +1,12 @@
-import { ImageBounds, ImageLayer, MarkerLayer } from "@7c00/canvas-tilemap";
-import nonGroundIcon from "../../images/icon-non-ground.png";
-import { MultiLevelMaps } from "./multi-level-maps";
+import { ImageBounds, ImageLayer } from "@7c00/canvas-tilemap";
+import { MultiLevelMaps } from "../multi-level-maps";
 import {
+  multiLevelNonGroundMaps,
   nonGroundMaps,
-  nonGroundMaps2,
   nonGroundMaps3,
 } from "./non-ground-maps-data";
 import { tilemap } from "./tilemap";
 
-export let nonGroundMarkerLayer: MarkerLayer;
 let nonGroundMaskLayer: ImageLayer;
 const imageLayerMap = {} as Record<string, ImageLayer>;
 export const multiLevelMaps = [] as MultiLevelMaps[];
@@ -87,35 +85,8 @@ export function hideNonGroundMaps() {
   tilemap.draw();
 }
 
-async function createCanvasImage(
-  src: string,
-  width: number,
-  height: number
-): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement("canvas");
-  canvas.width = width * devicePixelRatio;
-  canvas.height = height * devicePixelRatio;
-  return new Promise((resolve) => {
-    const image = new Image();
-    image.src = src;
-    image.addEventListener("load", () => {
-      const canvas2d = canvas.getContext("2d")!;
-      canvas2d.drawImage(image, 0, 0, canvas.width, canvas.height);
-      resolve(canvas);
-    });
-  });
-}
-
 export async function initNonGroundMaps() {
-  nonGroundMarkerLayer = new MarkerLayer(tilemap, {
-    items: [],
-    image: await createCanvasImage(nonGroundIcon, 16, 16),
-    anchor: [0, 1],
-    clickable: false,
-  });
-  tilemap.markerLayers.add(nonGroundMarkerLayer);
-
-  for (const levels of nonGroundMaps2) {
+  for (const levels of multiLevelNonGroundMaps) {
     multiLevelMaps.push(new MultiLevelMaps(levels));
   }
   for (const levels of nonGroundMaps3) {

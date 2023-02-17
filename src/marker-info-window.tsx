@@ -2,7 +2,8 @@ import classNames from "classnames";
 import { render } from "react-dom";
 import { useSnapshot } from "valtio";
 import { AreaItem, MarkerInfo } from "./api";
-import { mark, store, unmark } from "./store";
+import { store } from "./store";
+import { mark, unmark } from "./store/area-item";
 
 export function createMarkerInfoWindow(
   areaItem: AreaItem,
@@ -23,7 +24,7 @@ interface MarkerInfoWindowProps extends MarkerInfo {
 }
 
 function MarkerInfoWindow(props: MarkerInfoWindowProps) {
-  const { markedIdList } = useSnapshot(store);
+  const { markedSet: markedIdList } = useSnapshot(store);
   const marked = markedIdList.has(props.id);
   let markButton = null;
   const { areaItem } = props;

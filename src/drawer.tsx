@@ -7,7 +7,8 @@ import contentBackgroundImage from "../images/drawer-bg-content.png";
 import topBackgroundImage from "../images/drawer-bg-top.png";
 import buttonImage from "../images/drawer-button.png";
 import { AreaItem, AreaItemType } from "./api";
-import { store, toggleAreaItem, toggleDrawer } from "./store";
+import { store, toggleDrawer } from "./store";
+import { toggleAreaItem } from "./store/area-item";
 
 const state = proxy({ selected: proxySet() });
 

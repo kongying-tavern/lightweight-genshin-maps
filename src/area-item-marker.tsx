@@ -1,9 +1,14 @@
 import { MarkerItem, MarkerLayer } from "@7c00/canvas-tilemap";
 import dom2img from "dom-to-image";
 import { render } from "react-dom";
-import { isNonGround, store, tilemap } from ".";
-import { AreaItem, MarkerInfo } from "../api";
+import { AreaItem, MarkerInfo } from "./api";
+import { store } from "./store";
+import { isNonGround } from "./store//area-item";
+import { tilemap } from "./store/tilemap";
 
+/**
+ * 负责区分传送点位、标记状态，生成对应图层及显示控制
+ */
 export class AreaItemMarker {
   isTeleport = false;
   areaItem: AreaItem;
@@ -35,15 +40,18 @@ export class AreaItemMarker {
     }
   }
 
+  /**
+   * 重新生成点位并更新图层
+   */
   update() {
     this.items = [];
     this.markedItems = [];
     const markerInfoList = this.markerInfoList.filter((i) => {
-      return !store.showsNonGround || isNonGround(i);
+      return !store.nonGroundEnabled || isNonGround(i);
     });
     for (const i of markerInfoList) {
       const [x, y] = i.position.split(",").map((i) => parseFloat(i));
-      if (store.markedIdList.has(i.id)) {
+      if (store.markedSet.has(i.id)) {
         this.markedItems.push({ data: i, x, y });
       } else {
         this.items.push({ data: i, x, y });
@@ -98,7 +106,7 @@ export class AreaItemMarker {
       dom.style.height = `${iconSize * devicePixelRatio}px`;
       const element = (
         <>
-          {!specialFlag && <MarkerDecoration marked={marked} />}
+          {!specialFlag && <MarkerBackground marked={marked} />}
           <img
             className="object-contain w-full h-full box-border absolute left-0 top-0"
             style={{ padding: (specialFlag ? 0 : padding) * devicePixelRatio }}
@@ -120,7 +128,7 @@ export class AreaItemMarker {
   }
 }
 
-function MarkerDecoration(props: { marked: boolean }) {
+function MarkerBackground(props: { marked: boolean }) {
   const cirlce = (
     <circle fill-opacity="0.298595935" fill="#000000" cx="42" cy="42" r="32" />
   );

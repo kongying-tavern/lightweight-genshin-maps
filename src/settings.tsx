@@ -1,28 +1,28 @@
 import { Switch } from "./components/switch";
 import {
   store,
-  toggleShowsMarked,
-  toggleShowsNonGround,
-  toggleShowsTeleports,
+  toggleMarkedVisible,
+  toggleNonGround,
+  toggleTeleport,
 } from "./store";
 
 export function Settings() {
   return (
     <div className="absolute bottom-4 left-4 flex flex-col gap-1.5">
       <Switch
-        defaultValue={store.showsNonGround}
+        defaultValue={store.nonGroundEnabled}
         label="地下地图"
-        onChange={toggleShowsNonGround}
+        onChange={toggleNonGround}
       />
       <Switch
-        defaultValue={store.showsTeleports}
+        defaultValue={store.teleportVisible}
         label="传送点位"
-        onChange={toggleShowsTeleports}
+        onChange={toggleTeleport}
       />
       <Switch
-        defaultValue={store.showsMarked}
+        defaultValue={store.markedVisible}
         label="标记点位"
-        onChange={toggleShowsMarked}
+        onChange={toggleMarkedVisible}
       />
     </div>
   );

@@ -1,15 +1,17 @@
+import { MarkerLayer } from "@7c00/canvas-tilemap";
 import { proxySet } from "valtio/utils";
 import { store } from ".";
+import nonGroundIcon from "../../images/icon-non-ground.png";
 import { api, AreaItem, AreaItemType, MarkerInfo } from "../api";
-import { AreaItemMarker } from "./area-item-marker";
-import { nonGroundMarkerLayer } from "./non-ground-maps";
+import { AreaItemMarker } from "../area-item-marker";
 import { tilemap } from "./tilemap";
 
+export let nonGroundIconLayer: MarkerLayer;
 export const areaItemMarkerMap = {} as Record<number, AreaItemMarker>;
 const areaItemMap = {} as Record<number, AreaItem>;
-const nonGroundMarkerInfoList = new Set<MarkerInfo>();
+export const nonGroundMarkerInfoList = new Set<MarkerInfo>();
 const markerInfoListMap = {} as Record<number, MarkerInfo[]>;
-const markedStorageKey = "markedIdList";
+const markedStorageKey = "marked";
 
 export async function initIcons() {
   const cacheKey = "icons";
@@ -33,18 +35,28 @@ export async function initAreaItemTypes() {
   }
 }
 
-export function initMarkedIdList() {
+export async function initNonGroundIconLayer() {
+  nonGroundIconLayer = new MarkerLayer(tilemap, {
+    items: [],
+    image: await createCanvasImage(nonGroundIcon, 16, 16),
+    anchor: [0, 1],
+    clickable: false,
+  });
+  tilemap.markerLayers.add(nonGroundIconLayer);
+}
+
+export function loadMarkedSet() {
   const json = localStorage.getItem(markedStorageKey);
   if (json) {
-    store.markedIdList = proxySet(JSON.parse(json));
+    store.markedSet = proxySet(JSON.parse(json));
   }
 }
 
-export async function initAreaItems() {
+export async function updateAreaItems() {
   // 先移除之前地区的传送点位及非露天图标图层
-  hideTeleports();
-  if (nonGroundMarkerLayer) {
-    tilemap.markerLayers.delete(nonGroundMarkerLayer);
+  hideTeleport();
+  if (nonGroundIconLayer) {
+    tilemap.markerLayers.delete(nonGroundIconLayer);
   }
 
   const { record } = await api("item/get/list", {
@@ -52,10 +64,11 @@ export async function initAreaItems() {
     size: 1e3,
   });
 
-  store.teleports.clear();
+  // 先移除之前的地区物品
   for (const itemType of Object.values(store.itemTypeMap)) {
     itemType.items = [];
   }
+  store.teleports.clear();
   for (const areaItem of record as AreaItem[]) {
     areaItemMap[areaItem.itemId] = areaItem;
     for (const typeId of areaItem.typeIdList) {
@@ -70,7 +83,7 @@ export async function initAreaItems() {
       store.teleports.add(areaItem.itemId);
     }
   }
-  if (store.showsTeleports) {
+  if (store.teleportVisible) {
     activeAreaItems(Array.from(store.teleports));
   }
 }
@@ -90,7 +103,7 @@ async function activeAreaItems(areaItemIdList: number[]) {
   if (toBeFetchedIdList.length) {
     fetchMarkerInfo(toBeFetchedIdList);
   } else {
-    updateNonGroundMarkerLayer();
+    updateNonGroundIconLayer();
   }
 }
 
@@ -125,19 +138,19 @@ async function fetchMarkerInfo(itemIdList: number[]) {
     areaItemMarkerMap[areaItemId] = marker;
   }
 
-  updateNonGroundMarkerLayer();
+  updateNonGroundIconLayer();
 }
 
-export function hideTeleports() {
+export function hideTeleport() {
   for (const areaItemId of store.teleports) {
     store.activeAreaItems.delete(areaItemId);
     areaItemMarkerMap[areaItemId]?.hideMarkerLayer();
     removeNonGroundMarkers(areaItemId);
   }
-  updateNonGroundMarkerLayer();
+  updateNonGroundIconLayer();
 }
 
-export function showTeleports() {
+export function showTeleport() {
   if (store.teleports.size == 0) return;
   const teleports = Array.from(store.teleports);
   if (!areaItemMarkerMap[teleports[0]]) {
@@ -149,20 +162,7 @@ export function showTeleports() {
     areaItemMarkerMap[areaItemId]?.showMarkerLayer();
     addNonGroundMarkers(areaItemId);
   }
-  updateNonGroundMarkerLayer();
-}
-
-function updateNonGroundMarkerLayer() {
-  if (!nonGroundMarkerLayer) return;
-
-  tilemap.markerLayers.delete(nonGroundMarkerLayer);
-  nonGroundMarkerLayer.options.items = [];
-  for (const markerInfo of nonGroundMarkerInfoList) {
-    const [x, y] = markerInfo.position.split(",").map((i) => parseFloat(i));
-    nonGroundMarkerLayer.options.items.push({ x, y });
-  }
-  tilemap.markerLayers.add(nonGroundMarkerLayer);
-  tilemap.draw();
+  updateNonGroundIconLayer();
 }
 
 function removeNonGroundMarkers(areaItemId: number) {
@@ -187,7 +187,7 @@ export function toggleAreaItem(areaItem: AreaItem) {
     store.activeAreaItems.delete(itemId);
     areaItemMarkerMap[itemId]?.hideMarkerLayer();
     removeNonGroundMarkers(itemId);
-    updateNonGroundMarkerLayer();
+    updateNonGroundIconLayer();
   } else {
     store.activeAreaItems.add(itemId);
     activeAreaItems([areaItem.itemId]);
@@ -204,36 +204,84 @@ export function updateMarkerLayer() {
   }
 }
 
+/**
+ * 标记点位
+ */
 export function mark(markerId: number) {
-  store.markedIdList.add(markerId);
+  store.markedSet.add(markerId);
   updateMarkerLayer();
-  const markedIdList = Array.from(store.markedIdList);
+  const markedIdList = Array.from(store.markedSet);
   localStorage.setItem(markedStorageKey, JSON.stringify(markedIdList));
 }
 
+/**
+ * 取消标记点位
+ */
 export function unmark(markerId: number) {
-  store.markedIdList.delete(markerId);
+  store.markedSet.delete(markerId);
   updateMarkerLayer();
-  const markedIdList = Array.from(store.markedIdList);
+  const markedIdList = Array.from(store.markedSet);
   localStorage.setItem(markedStorageKey, JSON.stringify(markedIdList));
 }
 
-export function updateShowsMarked() {
+/**
+ * 更新已标记点位的显示
+ */
+export function updateMarkedMarkers() {
   for (const areaItemId in areaItemMarkerMap) {
     const markerLayer = areaItemMarkerMap[areaItemId];
-    if (store.showsMarked) {
+    if (store.markedVisible) {
       markerLayer.showMarked();
     } else {
       markerLayer.hideMarked();
     }
     for (const markerInfo of markerInfoListMap[areaItemId] ?? []) {
       if (!isNonGround(markerInfo)) continue;
-      if (store.showsMarked) {
+      if (store.markedVisible) {
         nonGroundMarkerInfoList.add(markerInfo);
       } else {
         nonGroundMarkerInfoList.delete(markerInfo);
       }
     }
   }
-  updateNonGroundMarkerLayer();
+  updateNonGroundIconLayer();
+}
+
+/**
+ * 重新生成非露天点位图标图层
+ */
+function updateNonGroundIconLayer() {
+  if (!nonGroundIconLayer) return;
+
+  tilemap.markerLayers.delete(nonGroundIconLayer);
+  nonGroundIconLayer.options.items = [];
+  for (const markerInfo of nonGroundMarkerInfoList) {
+    const [x, y] = markerInfo.position.split(",").map((i) => parseFloat(i));
+    nonGroundIconLayer.options.items.push({ x, y });
+  }
+  tilemap.markerLayers.add(nonGroundIconLayer);
+  tilemap.draw();
+}
+
+/**
+ * 加载图片并绘制到 canvas 作为 CanvasImageSource，
+ * 为的是让图片缩放至目标尺寸 * pixelRatio
+ */
+async function createCanvasImage(
+  src: string,
+  width: number,
+  height: number
+): Promise<HTMLCanvasElement> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width * devicePixelRatio;
+  canvas.height = height * devicePixelRatio;
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.src = src;
+    image.addEventListener("load", () => {
+      const canvas2d = canvas.getContext("2d")!;
+      canvas2d.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas);
+    });
+  });
 }
