@@ -4,14 +4,14 @@ import {
   TileLayer,
   Tilemap,
 } from "@7c00/canvas-tilemap";
-import { closeAreaPicker, closeDrawer, mark, store, tileLayerMap } from ".";
+import { closeAreaPicker, closeDrawer, store, tileLayerMap } from ".";
 import { teyvatMapConfig } from "../maps-config";
 import { createMarkerInfoWindow } from "../marker-info-window";
-import { initNonGroundMaps, multiLevelMaps } from "./non-ground-maps";
+import { initNonGroundMaps } from "./non-ground-maps";
 
 export let tilemap: Tilemap;
 let teyvatTileLayer: TileLayer;
-let markerInfoLayer: DomLayer;
+let markerInfoLayer: DomLayer | null;
 
 function onTilemapClick(event?: MarkerEvent) {
   if (event) {
@@ -31,6 +31,7 @@ function onTilemapClick(event?: MarkerEvent) {
   } else {
     if (markerInfoLayer) {
       tilemap.domLayers.delete(markerInfoLayer);
+      markerInfoLayer = null;
     }
     tilemap.draw();
   }

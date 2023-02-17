@@ -63,8 +63,10 @@ function hideImageLayer(url: string) {
 
 export async function showNonGroundMaps() {
   showNonGroundMaskLayer();
-  for (const [_, { imageUrl, imageBounds }] of nonGroundMaps) {
-    tilemap.imageLayers.add(await getImageLayer(imageUrl, imageBounds));
+  for (const { url, bounds } of nonGroundMaps) {
+    if (url && bounds) {
+      tilemap.imageLayers.add(await getImageLayer(url, bounds));
+    }
   }
   for (const maps of multiLevelMaps) {
     maps.show();
@@ -74,8 +76,10 @@ export async function showNonGroundMaps() {
 
 export function hideNonGroundMaps() {
   hideNonGroundMaskLayer();
-  for (const [_, { imageUrl }] of nonGroundMaps) {
-    hideImageLayer(imageUrl);
+  for (const { url } of nonGroundMaps) {
+    if (url) {
+      hideImageLayer(url);
+    }
   }
   for (const maps of multiLevelMaps) {
     maps.hide();
@@ -112,13 +116,9 @@ export async function initNonGroundMaps() {
   tilemap.markerLayers.add(nonGroundMarkerLayer);
 
   for (const levels of nonGroundMaps2) {
-    multiLevelMaps.push(
-      new MultiLevelMaps(levels, "https://assets.yuanshen.site/overlay/SM")
-    );
+    multiLevelMaps.push(new MultiLevelMaps(levels));
   }
   for (const levels of nonGroundMaps3) {
-    multiLevelMaps.push(
-      new MultiLevelMaps(levels, "https://assets.yuanshen.site/overlay")
-    );
+    multiLevelMaps.push(new MultiLevelMaps(levels));
   }
 }

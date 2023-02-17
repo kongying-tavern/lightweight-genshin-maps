@@ -1,65 +1,82 @@
-import { DomLayer, ImageBounds } from "@7c00/canvas-tilemap";
+import { DomLayer } from "@7c00/canvas-tilemap";
 import classNames from "classnames";
 import { render } from "preact";
 import { useState } from "react";
 import { useSnapshot } from "valtio";
 import { store } from ".";
 import { getImageLayer } from "./non-ground-maps";
+import { NonGroundMap } from "./non-ground-maps-data";
 import { tilemap } from "./tilemap";
 
 export class MultiLevelMaps {
-  baseUrl = "";
-  levels: [string, ImageBounds][];
-  domLayer: DomLayer;
+  levels: NonGroundMap[];
+  domLayer?: DomLayer;
   level = 0;
 
-  constructor(levels: [string, ImageBounds][], baseUrl: string) {
+  constructor(levels: NonGroundMap[]) {
     this.levels = levels;
-    this.baseUrl = baseUrl;
 
-    let position = levels[0][1][1];
-    for (const [_, bounds] of levels) {
-      const [x, y] = bounds[1];
-      position[0] = Math.max(position[0], x);
-      position[1] = Math.max(position[1], y);
+    if (levels.length > 1) {
+      let minX = Number.MAX_SAFE_INTEGER;
+      let maxY = Number.MIN_SAFE_INTEGER;
+      for (const { bounds } of levels) {
+        if (bounds) {
+          const [x, y] = bounds[1];
+          minX = Math.min(minX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+      const element = document.createElement("div");
+      const position = [minX, maxY] as [number, number];
+      this.domLayer = new DomLayer(tilemap, { element: element, position });
+      render(<LevelSwitch maps={this} />, element);
     }
-    const element = document.createElement("div");
-    this.domLayer = new DomLayer(tilemap, { element: element, position });
-    render(<LevelSwitch maps={this} />, element);
   }
 
   async show() {
     this.addSwitch();
-    tilemap.imageLayers.add(await this.getLayer(this.level));
+    const layer = await this.getLayer(this.level);
+    if (layer) {
+      tilemap.imageLayers.add(layer);
+    }
   }
 
   async hide() {
     this.removeSwitch();
-    tilemap.imageLayers.delete(await this.getLayer(this.level));
+    const layer = await this.getLayer(this.level);
+    if (layer) {
+      tilemap.imageLayers.delete(layer);
+    }
   }
 
   async addSwitch() {
-    if (!tilemap.domLayers.has(this.domLayer)) {
+    if (this.domLayer && !tilemap.domLayers.has(this.domLayer)) {
       tilemap.domLayers.add(this.domLayer);
     }
   }
 
   async removeSwitch() {
-    if (tilemap.domLayers.has(this.domLayer)) {
+    if (this.domLayer && tilemap.domLayers.has(this.domLayer)) {
       tilemap.domLayers.delete(this.domLayer);
     }
   }
 
   getLayer(index: number) {
-    return getImageLayer(
-      `${this.baseUrl}/${this.levels[index][0]}.png`,
-      this.levels[index][1]
-    );
+    const { url, bounds } = this.levels[index];
+    if (url && bounds) {
+      return getImageLayer(url, bounds);
+    }
   }
 
   async setLevel(level: number) {
-    tilemap.imageLayers.delete(await this.getLayer(this.level));
-    tilemap.imageLayers.add(await this.getLayer(level));
+    let layer = await this.getLayer(this.level);
+    if (layer) {
+      tilemap.imageLayers.delete(layer);
+    }
+    layer = await this.getLayer(level);
+    if (layer) {
+      tilemap.imageLayers.add(layer);
+    }
     tilemap.draw();
     this.level = level;
   }
@@ -73,7 +90,7 @@ export function LevelSwitch({ maps }: { maps: MultiLevelMaps }) {
       {maps.levels.map((i, index) => (
         <div
           className={classNames(
-            "w-20 h-6 whitespace-nowrap overflow-hidden rounded text-sm flex items-center justify-center duration-100 ease-out",
+            "w-20 h-6 whitespace-nowrap overflow-hidden rounded text-xs flex items-center justify-center duration-100 ease-out",
             index == level ? "bg-cyan-600 text-white" : "bg-orange-50",
             showsLevelSwitch ? "opacity-100" : "opacity-0"
           )}
@@ -82,7 +99,7 @@ export function LevelSwitch({ maps }: { maps: MultiLevelMaps }) {
             maps.setLevel(index);
           }}
         >
-          {i[0]}
+          {i.name}
         </div>
       ))}
     </div>
