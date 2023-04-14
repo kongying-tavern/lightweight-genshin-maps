@@ -7,7 +7,7 @@
     "dev": "run-p 'tailwind -- -w' 'esbuild -- --watch --sourcemap --servedir=dist'"
   },
   "dependencies": {
-    "@7c00/canvas-tilemap": "0.5.5",
+    "@7c00/canvas-tilemap": "^0.6.0",
     "classnames": "^2.3.2",
     "dom-to-image": "^2.6.0",
     "preact": "^10.12.0",

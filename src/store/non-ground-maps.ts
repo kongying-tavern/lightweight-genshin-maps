@@ -21,7 +21,6 @@ export async function getImageLayer(
   }
   return new Promise((resolve) => {
     const image = new Image();
-    image.crossOrigin = "anonymous";
     image.src = url;
     image.addEventListener("load", () => {
       const imageLayer = new ImageLayer(tilemap, { image, bounds });

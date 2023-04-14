@@ -93,7 +93,7 @@ function TypeItem(props: { itemType: AreaItemType }) {
       }}
     >
       <div className="flex items-center">
-        <img src={icon} className="w-6 h-6 mr-2" crossOrigin="anonymous" />
+        <img src={icon} className="w-6 h-6 mr-2" />
         <div className="flex-1 text-gray-900">{name}</div>
         <div
           className={classNames(
@@ -137,7 +137,6 @@ function AreaItems(props: { items: AreaItem[]; isSelected: boolean }) {
                   <img
                     className="w-7 h-7 object-contain"
                     src={store.iconMap[i.iconTag]}
-                    crossOrigin="anonymous"
                   />
                 )}
               </div>
