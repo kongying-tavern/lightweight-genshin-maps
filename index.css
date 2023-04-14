@@ -519,13 +519,16 @@
 }
 
 .from-black\/50 {
-  --tw-gradient-from: rgb(0 0 0 / 0.5);
-  --tw-gradient-to: rgb(0 0 0 / 0);
+  --tw-gradient-from: rgb(0 0 0 / 0.5) var(--tw-gradient-from-position);
+  --tw-gradient-from-position:  ;
+  --tw-gradient-to: rgb(0 0 0 / 0)  var(--tw-gradient-from-position);
+  --tw-gradient-to-position:  ;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 .to-transparent {
-  --tw-gradient-to: transparent;
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+  --tw-gradient-to-position:  ;
 }
 
 .bg-contain {
